@@ -1,0 +1,62 @@
+<div class="audit-page">
+	<header class="page-header">
+		<div>
+			<h1>System Security Audit Log</h1>
+			<p>Search and inspect timestamped security and asset operations.</p>
+		</div>
+	</header>
+
+	<div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+
+	<section class="data-panel">
+		<div class="filter-bar">
+			<div class="field-group">
+				<label for="actionFilter">Action</label>
+				<select id="actionFilter" [(ngModel)]="selectedAction" (ngModelChange)="onActionChange()">
+					<option *ngFor="let action of availableActions" [value]="action">{{ getActionLabel(action) }}</option>
+				</select>
+			</div>
+
+			<div class="field-group">
+				<label for="fromDate">From</label>
+				<input id="fromDate" type="date" [(ngModel)]="fromDate" (ngModelChange)="onDateRangeChange()" />
+			</div>
+
+			<div class="field-group">
+				<label for="toDate">To</label>
+				<input id="toDate" type="date" [(ngModel)]="toDate" (ngModelChange)="onDateRangeChange()" />
+			</div>
+
+			<div class="field-group action-group">
+				<button type="button" class="btn btn-muted" (click)="clearDateRange()">Clear Dates</button>
+			</div>
+		</div>
+
+		<div *ngIf="logs.length > 0; else emptyState" class="audit-timeline">
+			<div *ngFor="let log of logs" class="timeline-entry">
+				<span class="timeline-dot" [style.background-color]="getActionColor(log.action)"></span>
+
+				<article class="timeline-card">
+					<div class="card-head">
+						<span class="action-tag" [style.background-color]="getActionColor(log.action)">{{ getActionLabel(log.action) }}</span>
+						<time class="mono">{{ log.timestamp | date:'short' }}</time>
+					</div>
+
+					<h3 class="asset-name">{{ log.assetName }}</h3>
+					<p class="details">{{ log.details }}</p>
+
+					<div class="operator-row">
+						<span>Operator</span>
+						<strong class="mono">{{ log.performedByEmail }}</strong>
+					</div>
+				</article>
+			</div>
+		</div>
+
+		<ng-template #emptyState>
+			<div *ngIf="!errorMessage" class="empty-state">
+				No audit transactions committed yet. Perform operational actions to generate ledger trails.
+			</div>
+		</ng-template>
+	</section>
+</div>

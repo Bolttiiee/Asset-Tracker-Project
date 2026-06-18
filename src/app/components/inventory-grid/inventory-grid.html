@@ -1,0 +1,170 @@
+<div class="inventory-page">
+	<header class="inventory-header">
+		<div>
+			<h1>Asset Management</h1>
+			<p>Manage and monitor your internal equipment lifecycle.</p>
+		</div>
+		<div class="header-actions" *ngIf="isAdminOrManager()">
+			<button class="btn btn-primary" (click)="openProvisioningModal()">Add Asset</button>
+		</div>
+	</header>
+
+	<div class="alerts" *ngIf="errorMessage || apiConnectionMessage || toastMessage">
+		<div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+		<div class="alert alert-warning" *ngIf="apiConnectionMessage">{{ apiConnectionMessage }}</div>
+		<div class="alert" *ngIf="toastMessage" [class.alert-success]="toastType === 'success'" [class.alert-error]="toastType === 'error'" [class.alert-info]="toastType === 'info'">{{ toastMessage }}</div>
+	</div>
+
+	<div *ngIf="metrics" class="kpi-grid">
+		<article class="kpi-card kpi-card-primary">
+			<span>Total Investment</span>
+			<strong>{{ (metrics.totalValuation ?? metrics.TotalValuation) | currency:'ZAR':'symbol':'1.2-2' }}</strong>
+			<small>{{ metrics.totalAssets ?? metrics.TotalAssets }} assets tracked</small>
+		</article>
+
+		<article class="kpi-card">
+			<span>Available Assets</span>
+			<strong>{{ metrics.distribution?.available ?? metrics.Distribution?.Available }}</strong>
+			<small>Ready to assign</small>
+		</article>
+
+		<article class="kpi-card">
+			<span>Checked Out</span>
+			<strong>{{ metrics.distribution?.checkedOut ?? metrics.Distribution?.CheckedOut }}</strong>
+			<small>Currently in use</small>
+		</article>
+
+		<article class="kpi-card">
+			<span>Under Maintenance</span>
+			<strong>{{ metrics.distribution?.underMaintenance ?? metrics.Distribution?.UnderMaintenance }}</strong>
+			<small>Temporarily unavailable</small>
+		</article>
+	</div>
+
+	<section class="inventory-panel">
+		<div class="filter-bar">
+			<div class="field-group field-search">
+				<label>Search</label>
+				<input type="text" [(ngModel)]="searchTerm" placeholder="Search by asset name or serial" />
+			</div>
+
+			<div class="field-group">
+				<label>Status</label>
+				<select [(ngModel)]="statusFilter">
+					<option value="">All statuses</option>
+					<option value="Available">Available</option>
+					<option value="Checked Out">Checked Out</option>
+					<option value="Under Maintenance">Under Maintenance</option>
+					<option *ngIf="isAdminOrManager()" value="Decommissioned">Decommissioned</option>
+				</select>
+			</div>
+
+			<div class="field-group">
+				<label>Category</label>
+				<select [(ngModel)]="categoryFilter">
+					<option value="">All categories</option>
+					<option *ngFor="let cat of availableCategories" [value]="cat">{{ cat }}</option>
+				</select>
+			</div>
+
+			<div class="field-group">
+				<label>Min Value</label>
+				<input type="number" [(ngModel)]="minValueFilter" placeholder="500" />
+			</div>
+
+			<div class="records-summary">{{ filteredAssets.length }} of {{ assets.length }} records</div>
+		</div>
+
+		<div class="table-shell">
+			<table class="asset-table">
+				<thead>
+					<tr>
+						<th>Asset</th>
+						<th>Serial</th>
+						<th>Category</th>
+						<th>Value</th>
+						<th>Status</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr *ngFor="let asset of filteredAssets">
+						<td>
+							<div class="asset-title">{{ asset.name }}</div>
+							<div class="asset-subtitle" *ngIf="asset.assignedTo">Assigned to: {{ asset.assignedTo }}</div>
+						</td>
+						<td class="mono">{{ asset.serialNumber }}</td>
+						<td>{{ asset.category }}</td>
+						<td class="amount">{{ asset.value | currency:'ZAR':'symbol':'1.2-2' }}</td>
+						<td><app-status-chip [status]="asset.status"></app-status-chip></td>
+						<td *ngIf="isAdminOrManager()" class="action-cell">
+							<button class="btn btn-muted" (click)="$event.stopPropagation(); openEditAssetDrawer(asset)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Edit' }}</button>
+							<button class="btn btn-success" *ngIf="asset.status === 'Available'" (click)="$event.stopPropagation(); openCheckoutDrawer(asset)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Assign' }}</button>
+							<button class="btn btn-warning" *ngIf="asset.status === 'Checked Out'" (click)="$event.stopPropagation(); handleReturn(asset.assetID)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Return' }}</button>
+							<button class="btn btn-muted" *ngIf="asset.status === 'Checked Out'" (click)="$event.stopPropagation(); forceReturnAsset(asset)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Force Return' }}</button>
+							<button class="btn btn-warning" *ngIf="asset.status === 'Available'" (click)="$event.stopPropagation(); toggleMaintenance(asset, true)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Maintenance' }}</button>
+							<button class="btn btn-success" *ngIf="asset.status === 'Under Maintenance'" (click)="$event.stopPropagation(); toggleMaintenance(asset, false)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Clear' }}</button>
+							<button class="btn btn-primary" *ngIf="asset.status === 'Decommissioned'" (click)="$event.stopPropagation(); restoreAsset(asset)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Restore' }}</button>
+							<button class="btn btn-danger" *ngIf="asset.status !== 'Decommissioned'" (click)="$event.stopPropagation(); decommissionAsset(asset)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Decommission' }}</button>
+						</td>
+						<td *ngIf="!isAdminOrManager() && asset.status === 'Available'" class="action-cell">
+							<button class="btn btn-success" (click)="$event.stopPropagation(); openCheckoutDrawer(asset)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Checkout' }}</button>
+						</td>
+						<td *ngIf="!isAdminOrManager() && asset.status !== 'Available'" class="action-cell">—</td>
+					</tr>
+					<tr *ngIf="filteredAssets.length === 0 && !errorMessage">
+							<td colspan="6" class="empty-state">No hardware assets found in inventory.</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</section>
+</div>
+
+<app-drawer [isOpen]="checkoutDrawerOpen" title="Assign Asset" (closeDrawer)="closeCheckoutDrawer()">
+	<div *ngIf="checkoutAssetName" class="drawer-form">
+		<div class="drawer-highlight">
+			<div class="drawer-label">Asset to Assign</div>
+			<div class="drawer-value">{{ checkoutAssetName }}</div>
+		</div>
+
+		<div class="drawer-field" *ngIf="isAdminOrManager()">
+			<label>Select Employee</label>
+			<input type="text" class="employee-search" [(ngModel)]="employeeSearch" placeholder="Type to filter by name, email, or department…" />
+			<select [(ngModel)]="selectedEmployeeId" (ngModelChange)="onEmployeeSelected($event)" size="6">
+				<option [ngValue]="null" disabled>Choose an employee…</option>
+				<option *ngFor="let employee of filteredEmployees" [ngValue]="employee.userID">{{ employee.fullName }} — {{ employee.email }}</option>
+			</select>
+			<small *ngIf="filteredEmployees.length === 0" class="employee-empty">No matching employees.</small>
+		</div>
+
+		<div class="drawer-field">
+			<label>Employee Full Name</label>
+			<input type="text" [(ngModel)]="checkoutFullName" placeholder="e.g., Jane Doe" [readonly]="isAdminOrManager()" />
+		</div>
+		<div class="drawer-field">
+			<label>Employee Email</label>
+			<input type="email" [(ngModel)]="checkoutEmail" placeholder="employee@company.com" [readonly]="isAdminOrManager()" />
+		</div>
+		<div class="drawer-field">
+			<label>Expected Return Date (min: today)</label>
+			<input type="date" [(ngModel)]="checkoutExpectedReturnDate" [min]="today | date:'yyyy-MM-dd'" />
+		</div>
+
+		<div class="drawer-actions">
+			<button class="btn btn-muted" (click)="clearCheckoutFormWithNotice()">Clear</button>
+			<button class="btn btn-muted" (click)="closeCheckoutDrawer()">Cancel</button>
+			<button class="btn btn-success" (click)="submitCheckout()" [disabled]="busyAssetId !== null">{{ busyAssetId !== null ? 'Processing...' : 'Assign Asset' }}</button>
+		</div>
+	</div>
+</app-drawer>
+
+<app-confirmation-dialog
+	[open]="confirmationModalOpen"
+	[title]="confirmationTitle"
+	[message]="confirmationMessage"
+	(confirmed)="confirmAction()"
+	(cancelled)="cancelConfirmation()">
+</app-confirmation-dialog>
+
+<app-asset-modal #provisionModal (assetCreated)="loadInventory()"></app-asset-modal>

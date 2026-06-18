@@ -1,0 +1,13 @@
+<div class="drawer-overlay" [class.drawer-open]="isOpen" (click)="onBackdropClick()"></div>
+<div class="drawer-container" [class.drawer-open]="isOpen" [style.width]="width">
+  <div class="drawer-header">
+    <h2 class="drawer-title">{{ title }}</h2>
+    <button class="drawer-close-btn" (click)="onClose()" type="button" aria-label="Close drawer">
+      ✕
+    </button>
+  </div>
+  
+  <div class="drawer-content">
+    <ng-content></ng-content>
+  </div>
+</div>
