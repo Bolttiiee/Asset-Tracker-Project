@@ -1,0 +1,62 @@
+<div class="my-assets-page">
+  <header class="page-header">
+    <div>
+      <h1>My Checked-Out Assets</h1>
+      <p>Track active checkouts, overdue returns, and complete returns quickly.</p>
+    </div>
+    <button class="btn btn-primary" (click)="loadMyAssets()" [disabled]="loading">{{ loading ? 'Refreshing...' : 'Refresh' }}</button>
+  </header>
+
+  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
+  <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+  <div *ngIf="loading" class="loading-row">Loading assets...</div>
+
+  <section *ngIf="!loading" class="data-panel">
+    <div class="table-shell">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th>Category</th>
+            <th>Serial</th>
+            <th>Checkout Date</th>
+            <th>Expected Return</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of assets" [class.row-overdue]="item.isOverdue">
+            <td class="asset-title-cell">{{ item.assetName }}</td>
+            <td>{{ item.category }}</td>
+            <td class="mono">{{ item.serialNumber }}</td>
+            <td>{{ item.checkoutDate | date:'mediumDate' }}</td>
+            <td>
+              <div class="due-wrap">
+                {{ item.expectedReturnDate | date:'mediumDate' }}
+                <span *ngIf="item.isOverdue" class="overdue-pill">{{ getDaysOverdue(item.expectedReturnDate) }} days overdue</span>
+              </div>
+            </td>
+            <td>
+              <app-status-chip [status]="'Checked Out'"></app-status-chip>
+            </td>
+            <td>
+              <button class="btn btn-success" (click)="returnAsset(item)" [disabled]="returningAssetId === item.assetID">{{ returningAssetId === item.assetID ? 'Returning...' : 'Return' }}</button>
+            </td>
+          </tr>
+          <tr *ngIf="assets.length === 0">
+            <td colspan="7" class="empty-state">No active checkout records found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<app-confirmation-dialog
+  [open]="confirmationModalOpen"
+  [title]="confirmationTitle"
+  [message]="confirmationMessage"
+  (confirmed)="confirmReturn()"
+  (cancelled)="cancelReturn()">
+</app-confirmation-dialog>

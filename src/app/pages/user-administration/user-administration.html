@@ -1,0 +1,156 @@
+<div style="padding: 2rem;">
+  <h2 style="margin: 0 0 0.4rem 0; color: #2d3748;">User Administration</h2>
+  <p style="margin: 0 0 1rem 0; color: #718096;">Manage approvals, account status, roles, and password reset</p>
+
+  <app-confirmation-dialog
+    [open]="confirmationModalOpen"
+    [title]="confirmationTitle"
+    [message]="confirmationMessage"
+    (confirmed)="confirmAction()"
+    (cancelled)="cancelConfirmation()">
+  </app-confirmation-dialog>
+
+  <!-- Inline Rejection Modal -->
+  <div *ngIf="rejectModalOpen" style="position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+    <div style="background: white; border-radius: 8px; padding: 1.5rem; width: 420px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+      <h3 style="margin: 0 0 0.5rem 0; color: #2d3748;">Reject User Account</h3>
+      <p style="margin: 0 0 1rem 0; color: #718096; font-size: 0.9rem;">Provide a reason that will be recorded against this account.</p>
+      <textarea [(ngModel)]="rejectReason" rows="3" placeholder="Enter rejection reason..." style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9rem; resize: vertical; box-sizing: border-box;"></textarea>
+      <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+        <button (click)="cancelReject()" style="border: 1px solid #cbd5e0; background: white; padding: 0.45rem 0.9rem; border-radius: 4px; cursor: pointer; color: #4a5568;">Cancel</button>
+        <button (click)="confirmReject()" [disabled]="!rejectReason.trim()" style="border: none; background: #dd6b20; color: white; padding: 0.45rem 0.9rem; border-radius: 4px; cursor: pointer; opacity: rejectReason.trim() ? 1 : 0.5;">Confirm Reject</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="actionMessage"
+       [ngStyle]="{
+         position: 'fixed',
+         top: '1rem',
+         right: '1rem',
+         zIndex: 1200,
+         minWidth: '320px',
+         maxWidth: '420px',
+         background: actionMessageType === 'success' ? '#c6f6d5' : '#fed7d7',
+         color: actionMessageType === 'success' ? '#22543d' : '#9b2c2c',
+         borderLeft: actionMessageType === 'success' ? '4px solid #22543d' : '4px solid #9b2c2c',
+         padding: '0.95rem 1rem',
+         borderRadius: '8px',
+         boxShadow: '0 12px 30px rgba(0,0,0,0.18)',
+         fontWeight: '600'
+       }"
+       aria-live="polite">
+    {{ actionMessage }}
+  </div>
+  <div *ngIf="errorMessage" style="background: #fed7d7; color: #9b2c2c; border-left: 4px solid #9b2c2c; padding: 0.9rem; border-radius: 4px; margin-bottom: 0.8rem;">
+    {{ errorMessage }}
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem;">
+    <input [(ngModel)]="filters.search" (input)="loadUsers()" placeholder="Search name/email" style="padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; width: 220px;" />
+    <input [(ngModel)]="filters.department" (input)="loadUsers()" placeholder="Department" style="padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; width: 180px;" />
+    <select [(ngModel)]="filters.role" (ngModelChange)="loadUsers()" style="padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; width: 170px;">
+      <option value="">All Roles</option>
+      <option value="Standard User">Standard User</option>
+      <option value="Asset Manager">Asset Manager</option>
+      <option value="Admin">Administrator</option>
+    </select>
+    <select [(ngModel)]="filters.status" (ngModelChange)="loadUsers()" style="padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; width: 170px;">
+      <option value="">All Statuses</option>
+      <option value="Pending">Pending</option>
+      <option value="Active">Active</option>
+      <option value="Rejected">Rejected</option>
+      <option value="Inactive">Inactive</option>
+    </select>
+    <button (click)="loadUsers()" [disabled]="loading" style="background: #2b6cb0; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">{{ loading ? 'Applying...' : 'Apply' }}</button>
+  </div>
+
+  <div *ngIf="loading" style="padding: 0.8rem; color: #4a5568;">Loading users...</div>
+
+  <table *ngIf="!loading" style="width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; background: white; font-size: 0.88rem;">
+    <thead>
+      <tr style="background: #f7fafc; text-align: left; color: #4a5568;">
+        <th style="padding: 0.7rem;">Name</th>
+        <th style="padding: 0.7rem;">Email</th>
+        <th style="padding: 0.7rem;">Department</th>
+        <th style="padding: 0.7rem;">Employee ID</th>
+        <th style="padding: 0.7rem;">Registered</th>
+        <th style="padding: 0.7rem;">Role</th>
+        <th style="padding: 0.7rem;">Status</th>
+        <th style="padding: 0.7rem; text-align: right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let user of users" style="border-top: 1px solid #edf2f7;">
+        <td style="padding: 0.7rem; font-weight: 600; color: #2d3748;">{{ user.fullName }}</td>
+        <td style="padding: 0.7rem; color: #4a5568;">{{ user.email }}</td>
+        <td style="padding: 0.7rem; color: #718096;">{{ user.department || '—' }}</td>
+        <td style="padding: 0.7rem; font-family: monospace; color: #4a5568;">{{ user.employeeID || '—' }}</td>
+        <td style="padding: 0.7rem; color: #718096; white-space: nowrap;">{{ user.registrationDate | date:'dd MMM yyyy' }}</td>
+        <td style="padding: 0.7rem;">
+          <select [ngModel]="user.role" (ngModelChange)="changeRole(user, $event)" [disabled]="busyUserId === user.userID" style="padding: 0.35rem; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85rem;">
+            <option value="Standard User">Standard User</option>
+            <option value="Asset Manager">Asset Manager</option>
+            <option value="Admin">Administrator</option>
+          </select>
+        </td>
+        <td style="padding: 0.7rem;">
+          <div>
+            <span [ngStyle]="{
+              background: user.accountStatus === 'Active' ? '#c6f6d5' :
+                          user.accountStatus === 'Inactive' ? '#fed7d7' :
+                          user.accountStatus === 'Pending' ? '#fefcbf' :
+                          user.accountStatus === 'Rejected' ? '#4a5568' : '#e2e8f0',
+              color: user.accountStatus === 'Active' ? '#22543d' :
+                     user.accountStatus === 'Inactive' ? '#9b2c2c' :
+                     user.accountStatus === 'Pending' ? '#744210' :
+                     user.accountStatus === 'Rejected' ? '#ffffff' : '#4a5568',
+              padding: '0.2rem 0.6rem',
+              borderRadius: '999px',
+              fontSize: '0.78rem',
+              fontWeight: '600',
+              display: 'inline-block'
+            }">{{ user.accountStatus }}</span>
+            <div *ngIf="user.accountStatus === 'Rejected' && user.rejectionReason" style="margin-top: 0.3rem; font-size: 0.75rem; color: #718096; font-style: italic; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="user.rejectionReason">
+              Reason: {{ user.rejectionReason }}
+            </div>
+          </div>
+        </td>
+        <td style="padding: 0.7rem; text-align: right; display: flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: wrap;">
+          <button (click)="openUser(user.userID)" [disabled]="busyUserId === user.userID" style="border: 1px solid #cbd5e0; background: white; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem;">View</button>
+          <button *ngIf="user.accountStatus === 'Pending'" (click)="approveUser(user)" [disabled]="busyUserId === user.userID" style="border: none; background: #319795; color: white; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem;">
+            {{ busyUserId === user.userID ? '...' : 'Approve' }}
+          </button>
+          <button *ngIf="user.accountStatus === 'Pending'" (click)="rejectUser(user)" [disabled]="busyUserId === user.userID" style="border: none; background: #dd6b20; color: white; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem;">Reject</button>
+          <button (click)="toggleActivation(user)" [disabled]="busyUserId === user.userID || user.accountStatus === 'Pending' || user.accountStatus === 'Rejected'" style="border: none; background: #4a5568; color: white; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem; opacity: (user.accountStatus === 'Pending' || user.accountStatus === 'Rejected') ? 0.4 : 1;">
+            {{ busyUserId === user.userID ? '...' : (user.accountStatus === 'Active' ? 'Deactivate' : 'Activate') }}
+          </button>
+          <button (click)="resetPassword(user)" [disabled]="busyUserId === user.userID" style="border: none; background: #2b6cb0; color: white; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem;">
+            {{ busyUserId === user.userID ? '...' : 'Reset Password' }}
+          </button>
+        </td>
+      </tr>
+      <tr *ngIf="users.length === 0">
+        <td colspan="8" style="padding: 1rem; text-align: center; color: #718096;">No users found for current filters.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="selectedUser" style="margin-top: 1rem; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; background: #f8fafc;">
+    <h3 style="margin: 0 0 0.5rem 0; color: #2d3748;">{{ selectedUser.fullName }} — Current Checkouts</h3>
+    <div style="font-size: 0.85rem; color: #718096; margin-bottom: 0.5rem;">
+      {{ selectedUser.department }} · {{ selectedUser.employeeID }} · {{ selectedUser.email }}
+    </div>
+    <div style="font-size: 0.8rem; color: #718096; margin-bottom: 0.75rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+      <span *ngIf="selectedUser.approvedBy">Approved by user ID: <strong style="color: #4a5568;">{{ selectedUser.approvedBy }}</strong></span>
+      <span *ngIf="selectedUser.approvalRejectionDate">Approval / Rejection date: <strong style="color: #4a5568;">{{ selectedUser.approvalRejectionDate | date:'dd MMM yyyy, HH:mm' }}</strong></span>
+    </div>
+    <div *ngIf="selectedUser.currentCheckouts.length === 0" style="color: #718096;">No active checkout records.</div>
+    <ul *ngIf="selectedUser.currentCheckouts.length > 0" style="margin: 0; padding-left: 1.2rem; color: #4a5568;">
+      <li *ngFor="let item of selectedUser.currentCheckouts">
+        {{ item.assetName }} ({{ item.serialNumber }}) — due {{ item.expectedReturnDate | date:'mediumDate' }}
+        <strong *ngIf="item.isOverdue" style="color: #c53030;">(Overdue)</strong>
+      </li>
+    </ul>
+  </div>
+</div>

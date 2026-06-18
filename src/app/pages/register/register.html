@@ -1,0 +1,94 @@
+<div class="auth-page">
+  <section class="data-panel register-panel">
+    <header class="auth-header">
+      <img class="auth-logo" src="/asset-tracker-logo.svg" alt="Asset Tracker" />
+      <h1>Employee Self-Registration</h1>
+    </header>
+
+    <div *ngIf="isSuccess" class="alert alert-success register-success">
+      <h4>Registration Successful!</h4>
+      <p>{{ successMessage }}</p>
+      <a routerLink="/login" class="btn btn-primary auth-submit success-login-btn">Back to Sign-In</a>
+    </div>
+
+    <div *ngIf="errorMessage" class="alert alert-error">
+      {{ errorMessage }}
+    </div>
+
+    <form *ngIf="!isSuccess" class="auth-form" [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
+    
+    <div class="form-group">
+      <label for="fullName">Full Name *</label>
+      <input type="text" id="fullName" formControlName="fullName" placeholder="John Doe" [style.border-color]="isFieldInvalid('fullName') ? '#e53e3e' : '#cbd5e0'" />
+      <span *ngIf="getFieldError('fullName')" class="error-msg">{{ getFieldError('fullName') }}</span>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email Address * <span *ngIf="registerForm.get('email')?.pending" class="pending-check">(checking...)</span></label>
+      <input type="email" id="email" formControlName="email" placeholder="john.doe@company.com" [style.border-color]="isFieldInvalid('email') ? '#e53e3e' : '#cbd5e0'" />
+      <span *ngIf="getFieldError('email')" class="error-msg">{{ getFieldError('email') }}</span>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="employeeID">Employee ID * <span *ngIf="registerForm.get('employeeID')?.pending" class="pending-check">(checking...)</span></label>
+        <input type="text" id="employeeID" formControlName="employeeID" placeholder="EMP-12345" [style.border-color]="isFieldInvalid('employeeID') ? '#e53e3e' : '#cbd5e0'" />
+        <span *ngIf="getFieldError('employeeID')" class="error-msg">{{ getFieldError('employeeID') }}</span>
+      </div>
+
+      <div class="form-group">
+        <label for="department">Department / Team *</label>
+        <input type="text" id="department" formControlName="department" placeholder="Information Technology" [style.border-color]="isFieldInvalid('department') ? '#e53e3e' : '#cbd5e0'" />
+        <span *ngIf="getFieldError('department')" class="error-msg">{{ getFieldError('department') }}</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="phoneNumber">Phone Number (Optional)</label>
+      <input type="text" id="phoneNumber" formControlName="phoneNumber" placeholder="+27 82 123 4567" />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password *</label>
+      <input type="password" id="password" formControlName="password" placeholder="••••••••" [style.border-color]="isFieldInvalid('password') ? '#e53e3e' : '#cbd5e0'" />
+      
+      <div *ngIf="showPasswordCriteria" class="password-criteria">
+        <div class="strength-wrap">
+          <div class="strength-bar-track">
+            <div [ngStyle]="{'height': '100%', 'background': getPasswordStrength().color, 'width': getPasswordStrength().percent + '%', 'transition': 'width 0.3s ease'}"></div>
+          </div>
+          <small class="strength-label">{{ getPasswordStrength().text }}</small>
+        </div>
+        <div class="criteria-list">
+          <div [style.color]="(registerForm.get('password')?.value?.length || 0) >= 8 ? '#319795' : '#718096'">
+            ✓ At least 8 characters
+          </div>
+          <div [style.color]="hasUpperCase() ? '#319795' : '#718096'">
+            ✓ One uppercase letter
+          </div>
+          <div [style.color]="hasNumber() ? '#319795' : '#718096'">
+            ✓ One number
+          </div>
+          <div [style.color]="hasSpecialChar() ? '#319795' : '#718096'">
+            ✓ One special character (!@#$%^&* etc.)
+          </div>
+        </div>
+      </div>
+      
+      <span *ngIf="getFieldError('password')" class="error-msg">{{ getFieldError('password') }}</span>
+    </div>
+
+    <div class="form-group">
+      <label for="confirmPassword">Confirm Password *</label>
+      <input type="password" id="confirmPassword" formControlName="confirmPassword" placeholder="••••••••" [style.border-color]="isFieldInvalid('confirmPassword') ? '#e53e3e' : '#cbd5e0'" />
+      <span *ngIf="getFieldError('confirmPassword')" class="error-msg">{{ getFieldError('confirmPassword') }}</span>
+    </div>
+
+    <button type="submit" class="btn btn-primary auth-submit" [disabled]="isSubmitting || registerForm.invalid || registerForm.pending">
+      {{ isSubmitting ? 'Submitting...' : registerForm.pending ? 'Validating...' : 'Submit Registration Account Request' }}
+    </button>
+
+    <p class="foot-note">Already have an account? <a routerLink="/login">Sign in here</a></p>
+  </form>
+</section>
+</div>

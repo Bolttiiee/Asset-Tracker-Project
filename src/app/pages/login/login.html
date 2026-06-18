@@ -1,0 +1,68 @@
+<div class="auth-page">
+  <section class="data-panel auth-panel">
+    <header class="auth-header">
+      <img class="auth-logo" src="/asset-tracker-logo.svg" alt="Asset Tracker" />
+      <h1>System Sign-In</h1>
+    </header>
+
+    @if (errorMessage()) {
+      <div class="alert alert-error">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="field-group auth-field">
+        <label for="loginEmail">Email Address</label>
+        <input id="loginEmail" type="email" formControlName="email" placeholder="name@company.com" />
+        @if (isSubmitted() && loginForm.get('email')?.errors?.['required']) {
+          <div class="error-msg">Email is required to access the application.</div>
+        }
+      </div>
+
+      <div class="field-group auth-field">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" formControlName="password" placeholder="••••••••" />
+        @if (isSubmitted() && loginForm.get('password')?.errors?.['required']) {
+          <div class="error-msg">Security key password entry is missing.</div>
+        }
+      </div>
+
+      <div class="forgot-link-row">
+        <button type="button" class="link-action" (click)="triggerForgotPassword()">Forgot Password?</button>
+      </div>
+
+      @if (showForgotPasswordBox()) {
+        <div class="forgot-box" [formGroup]="forgotPasswordForm">
+          <label for="forgotEmail">Recovery Email Address</label>
+          <input id="forgotEmail" type="email" formControlName="email" placeholder="name@company.com" />
+
+          @if (forgotPasswordForm.get('email')?.touched && forgotPasswordForm.get('email')?.invalid) {
+            <div class="error-msg">Please enter a valid corporate email address.</div>
+          }
+
+          @if (forgotPasswordMessage()) {
+            <div class="alert alert-success forgot-message">{{ forgotPasswordMessage() }}</div>
+          }
+
+          @if (forgotPasswordError()) {
+            <div class="alert alert-error forgot-message">{{ forgotPasswordError() }}</div>
+          }
+
+          <div class="forgot-actions">
+            <button type="button" class="btn btn-muted" (click)="cancelForgotPassword()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="submitForgotPassword()" [disabled]="isForgotSubmitting()">
+              {{ isForgotSubmitting() ? 'Sending...' : 'Send Reset Token' }}
+            </button>
+          </div>
+        </div>
+      }
+
+      <button type="submit" class="btn btn-primary auth-submit" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Authenticating...' : 'Authenticate Credentials' }}
+      </button>
+
+      <p class="foot-note">New staff hire? <a routerLink="/register">Request an Account Here</a></p>
+    </form>
+  </section>
+</div>
