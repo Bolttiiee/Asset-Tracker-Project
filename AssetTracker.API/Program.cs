@@ -73,6 +73,9 @@ builder.Services.AddAuthorization(); // Add this line
 // 3. NOW BUILD THE APPLICATION
 var app = builder.Build();
 
+// Ensure the bootstrap administrator account exists and has Admin privileges.
+await AssetTracker.API.Data.DbSeeder.SeedAdminAsync(app.Services);
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
