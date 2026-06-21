@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="AssetTracker.API.Tests/AssetTracker.API.Tests.csproj" />
+  <Project Path="AssetTracker.API/AssetTracker.API.csproj" />
+</Solution>

@@ -1,0 +1,32 @@
+## .NET / Visual Studio ignores
+# Build results
+bin/
+obj/
+publish/
+[Pp]ublish/
+
+# Test results
+TestResults/
+[Tt]est[Rr]esults/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userprefs
+
+## Local configuration
+# NOTE: appsettings.json is intentionally tracked in this repository per project owner's request.
+# WARNING: it contains real connection strings, a JWT signing key and SMTP credentials.
+# Rotate those secrets if this repository is shared. Sanitized *.example.json templates are also kept.
+
+# Environment files & certificates (still excluded)
+.env
+*.env
+*.pfx
+*.p12
+*.key
+
+## Misc local artifacts
+response.txt
+**/response.txt
