@@ -406,6 +406,67 @@ namespace AssetTracker.API.Tests.Controllers
         }
 
         [Fact]
+        public async Task Login_WithInactiveAccountStatus_Returns403Forbidden()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new AuthController(context, _mockConfiguration.Object, _mockEmailService.Object, _mockLogger.Object);
+            var dto = new LoginDto
+            {
+                Email = "inactive@test.com",
+                Password = "Inactive@123"
+            };
+
+            // Act
+            var result = await controller.Login(dto);
+
+            // Assert
+            result.Should().BeOfType<ObjectResult>();
+            var objectResult = result as ObjectResult;
+            objectResult!.StatusCode.Should().Be(403);
+        }
+
+        [Fact]
+        public async Task Login_WithRejectedAccountStatus_Returns403Forbidden()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new AuthController(context, _mockConfiguration.Object, _mockEmailService.Object, _mockLogger.Object);
+            var dto = new LoginDto
+            {
+                Email = "rejected@test.com",
+                Password = "Rejected@123"
+            };
+
+            // Act
+            var result = await controller.Login(dto);
+
+            // Assert
+            result.Should().BeOfType<ObjectResult>();
+            var objectResult = result as ObjectResult;
+            objectResult!.StatusCode.Should().Be(403);
+        }
+
+        [Fact]
+        public async Task Login_WithInactiveAccount_DoesNotReturnToken()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new AuthController(context, _mockConfiguration.Object, _mockEmailService.Object, _mockLogger.Object);
+            var dto = new LoginDto
+            {
+                Email = "inactive@test.com",
+                Password = "Inactive@123"
+            };
+
+            // Act
+            var result = await controller.Login(dto);
+
+            // Assert
+            result.Should().NotBeOfType<OkObjectResult>();
+        }
+
+        [Fact]
         public async Task Login_CaseInsensitiveEmailComparison_ReturnsOk()
         {
             // Arrange

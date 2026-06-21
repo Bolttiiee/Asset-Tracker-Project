@@ -57,6 +57,30 @@ namespace AssetTracker.API.Tests.Helpers
                     Role = "Standard User",
                     AccountStatus = "Pending",
                     RegistrationDate = DateTime.UtcNow
+                },
+                new User
+                {
+                    UserID = 4,
+                    FullName = "Inactive User",
+                    Email = "inactive@test.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Inactive@123"),
+                    Department = "Finance",
+                    EmployeeID = "EMP004",
+                    Role = "Standard User",
+                    AccountStatus = "Inactive",
+                    RegistrationDate = DateTime.UtcNow
+                },
+                new User
+                {
+                    UserID = 5,
+                    FullName = "Rejected User",
+                    Email = "rejected@test.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Rejected@123"),
+                    Department = "Operations",
+                    EmployeeID = "EMP005",
+                    Role = "Standard User",
+                    AccountStatus = "Rejected",
+                    RegistrationDate = DateTime.UtcNow
                 }
             );
 

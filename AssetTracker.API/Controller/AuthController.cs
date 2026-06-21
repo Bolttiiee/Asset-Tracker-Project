@@ -120,10 +120,23 @@ namespace AssetTracker.API.Controllers
                 return Unauthorized(new { message = "Invalid email address or password." });
             }
 
-            // 2. ENFORCE STATUS RESTRICTION: Block users still awaiting admin verification
-            if (user.AccountStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+            // 2. ENFORCE STATUS RESTRICTION: Only Active accounts may log in.
+            // Allowlist by design - any status other than "Active" (Pending, Inactive,
+            // Rejected, or any future status) is denied by default.
+            if (!user.AccountStatus.Equals("Active", StringComparison.OrdinalIgnoreCase))
             {
-                return StatusCode(403, new { message = "Your registration request is still pending administrative approval. Please contact your manager." });
+                var statusMessage = user.AccountStatus switch
+                {
+                    var s when s.Equals("Pending", StringComparison.OrdinalIgnoreCase)
+                        => "Your registration request is still pending administrative approval. Please contact your manager.",
+                    var s when s.Equals("Rejected", StringComparison.OrdinalIgnoreCase)
+                        => "Your registration request was not approved. Please contact your manager.",
+                    var s when s.Equals("Inactive", StringComparison.OrdinalIgnoreCase)
+                        => "Your account has been deactivated. Please contact your administrator.",
+                    _ => "Your account is not permitted to log in. Please contact your administrator."
+                };
+
+                return StatusCode(403, new { message = statusMessage });
             }
 
             // 3. VERIFY SECURE PASSWORD MATCH USING BCRYPT
