@@ -1,85 +1,112 @@
-<div class="reports-page">
-  <header class="page-header">
+<div class="space-y-6">
+  <!-- Page Header -->
+  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1>Checkout Reports</h1>
-      <p>Filter by date range, category, asset, or user and export report data.</p>
+      <h1 class="text-3xl font-semibold text-slate-800 tracking-tight">Checkout Reports</h1>
+      <p class="text-sm text-slate-500 font-medium mt-1">Filter by date range, category, asset, or user and export report data.</p>
     </div>
-    <div class="report-actions">
-      <button class="btn btn-primary" (click)="runSearch()" [disabled]="loading || !!dateRangeError">{{ loading ? 'Applying...' : 'Apply Filters' }}</button>
-      <button class="btn btn-success" (click)="downloadExcel()" [disabled]="loading || exportingExcel || exportingPdf || !!dateRangeError">{{ exportingExcel ? 'Downloading...' : 'Excel' }}</button>
-      <button class="btn btn-danger" (click)="downloadPdf()" [disabled]="loading || exportingExcel || exportingPdf || !!dateRangeError">{{ exportingPdf ? 'Downloading...' : 'PDF' }}</button>
+    <div class="flex flex-wrap items-center gap-3">
+      <button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all duration-300" (click)="runSearch()" [disabled]="loading || !!dateRangeError">
+        {{ loading ? 'Applying...' : 'Apply Filters' }}
+      </button>
+      <button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 shadow-sm transition-all duration-300 disabled:opacity-60" (click)="downloadExcel()" [disabled]="loading || exportingExcel || exportingPdf || !!dateRangeError">
+        {{ exportingExcel ? 'Downloading...' : 'Excel' }}
+      </button>
+      <button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 shadow-sm transition-all duration-300 disabled:opacity-60" (click)="downloadPdf()" [disabled]="loading || exportingExcel || exportingPdf || !!dateRangeError">
+        {{ exportingPdf ? 'Downloading...' : 'PDF' }}
+      </button>
     </div>
   </header>
 
-  <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
-  <div *ngIf="dateRangeError" class="alert alert-error" style="margin-bottom: 0.5rem;">{{ dateRangeError }}</div>
+  <!-- Alerts -->
+  <div class="space-y-3" *ngIf="errorMessage || dateRangeError">
+    <div *ngIf="errorMessage" class="p-4 rounded-xl border border-rose-200 bg-rose-50 text-sm font-semibold text-rose-800 shadow-sm animate-pulse">{{ errorMessage }}</div>
+    <div *ngIf="dateRangeError" class="p-4 rounded-xl border border-rose-200 bg-rose-50 text-sm font-semibold text-rose-800 shadow-sm">{{ dateRangeError }}</div>
+  </div>
 
-  <section class="data-panel">
-    <div class="filter-bar">
-      <div class="field-group">
-        <label>From Date</label>
-        <input type="date" [(ngModel)]="filters.fromDate" />
+  <!-- Main filters and table -->
+  <section class="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+    <!-- Filter row -->
+    <div class="p-5 border-b border-slate-100 bg-slate-50 flex flex-wrap items-end gap-4">
+      <div class="flex flex-col gap-1.5 min-w-[140px]">
+        <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">From Date</label>
+        <input type="date" [(ngModel)]="filters.fromDate"
+               class="h-10 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
       </div>
 
-      <div class="field-group">
-        <label>To Date</label>
-        <input type="date" [(ngModel)]="filters.toDate" />
+      <div class="flex flex-col gap-1.5 min-w-[140px]">
+        <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">To Date</label>
+        <input type="date" [(ngModel)]="filters.toDate"
+               class="h-10 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
       </div>
 
-      <div class="field-group">
-        <label>Category</label>
-        <select [(ngModel)]="filters.category">
+      <div class="flex flex-col gap-1.5 min-w-[150px]">
+        <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Category</label>
+        <select [(ngModel)]="filters.category"
+                class="h-10 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
           <option value="All">All Categories</option>
           <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
         </select>
       </div>
 
-      <div class="field-group field-wide">
-        <label>Asset</label>
-        <select [(ngModel)]="filters.assetId">
+      <div class="flex flex-col gap-1.5 min-w-[200px] flex-1">
+        <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Asset</label>
+        <select [(ngModel)]="filters.assetId"
+                class="h-10 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
           <option [ngValue]="undefined">All Assets</option>
           <option *ngFor="let asset of assets" [ngValue]="asset.id">{{ asset.name }} ({{ asset.serialNumber }})</option>
         </select>
       </div>
 
-      <div class="field-group field-wide">
-        <label>User</label>
-        <select [(ngModel)]="filters.userId">
+      <div class="flex flex-col gap-1.5 min-w-[200px] flex-1">
+        <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">User</label>
+        <select [(ngModel)]="filters.userId"
+                class="h-10 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
           <option [ngValue]="undefined">All Users</option>
           <option *ngFor="let user of users" [ngValue]="user.id">{{ user.name }} ({{ user.email }})</option>
         </select>
       </div>
     </div>
 
-    <div *ngIf="loading" class="loading-row">Loading report rows...</div>
+    <!-- Loading state -->
+    <div *ngIf="loading" class="p-6 text-center text-slate-400 font-bold text-sm">Loading report rows...</div>
 
-    <div *ngIf="!loading" class="table-shell">
-      <table class="data-table">
+    <!-- Table content -->
+    <div *ngIf="!loading" class="overflow-x-auto custom-scrollbar">
+      <table class="w-full border-collapse text-left text-sm">
         <thead>
-          <tr>
-            <th>Checkout Date</th>
-            <th>Asset Name</th>
-            <th>Category</th>
-            <th>Serial</th>
-            <th>User Full Name</th>
-            <th>User Email</th>
-            <th>Return Date</th>
-            <th>Status</th>
+          <tr class="bg-slate-50 border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+            <th class="p-5 pl-6">Checkout Date</th>
+            <th class="p-5">Asset Name</th>
+            <th class="p-5">Category</th>
+            <th class="p-5">Serial</th>
+            <th class="p-5">User Full Name</th>
+            <th class="p-5">User Email</th>
+            <th class="p-5">Return Date</th>
+            <th class="p-5 pr-6">Status</th>
           </tr>
         </thead>
-        <tbody>
-          <tr *ngFor="let row of rows">
-            <td>{{ row.checkoutDate | date:'mediumDate' }}</td>
-            <td>{{ row.assetName }}</td>
-            <td>{{ row.category }}</td>
-            <td class="mono">{{ row.serialNumber }}</td>
-            <td>{{ row.userFullName }}</td>
-            <td>{{ row.userEmail }}</td>
-            <td>{{ row.returnDate ? (row.returnDate | date:'mediumDate') : '-' }}</td>
-            <td>{{ row.status }}</td>
+        <tbody class="divide-y divide-slate-100">
+          <tr *ngFor="let row of rows" class="hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0">
+            <td class="p-4 pl-6 text-slate-500 font-medium">{{ row.checkoutDate | date:'mediumDate' }}</td>
+            <td class="p-4 font-semibold text-slate-800">{{ row.assetName }}</td>
+            <td class="p-4 font-medium text-slate-500">{{ row.category }}</td>
+            <td class="p-4 font-mono text-xs text-slate-500 font-semibold">{{ row.serialNumber }}</td>
+            <td class="p-4 font-semibold text-slate-800">{{ row.userFullName }}</td>
+            <td class="p-4 text-slate-500 font-medium">{{ row.userEmail }}</td>
+            <td class="p-4 text-slate-500 font-medium">{{ row.returnDate ? (row.returnDate | date:'mediumDate') : '-' }}</td>
+            <td class="p-4 pr-6">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide"
+                    [class.bg-emerald-50]="row.status === 'Available' || row.status === 'Returned'" [class.text-emerald-700]="row.status === 'Available' || row.status === 'Returned'" [class.border]="row.status === 'Available' || row.status === 'Returned'" [class.border-emerald-100]="row.status === 'Available' || row.status === 'Returned'"
+                    [class.bg-amber-50]="row.status === 'Checked Out'" [class.text-amber-700]="row.status === 'Checked Out'" [class.border]="row.status === 'Checked Out'" [class.border-amber-100]="row.status === 'Checked Out'"
+                    [class.bg-rose-50]="row.status === 'Under Maintenance'" [class.text-rose-700]="row.status === 'Under Maintenance'" [class.border]="row.status === 'Under Maintenance'" [class.border-rose-100]="row.status === 'Under Maintenance'"
+                    [class.bg-slate-100]="row.status === 'Decommissioned'" [class.text-slate-600]="row.status === 'Decommissioned'" [class.border]="row.status === 'Decommissioned'" [class.border-slate-200]="row.status === 'Decommissioned'">
+                {{ row.status }}
+              </span>
+            </td>
           </tr>
           <tr *ngIf="rows.length === 0">
-            <td colspan="8" class="empty-state">No report rows found for selected filters.</td>
+            <td colspan="8" class="p-12 text-center text-slate-400 font-bold text-sm">No report rows found for selected filters.</td>
           </tr>
         </tbody>
       </table>

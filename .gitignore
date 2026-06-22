@@ -16,9 +16,12 @@ TestResults/
 *.userprefs
 
 ## Local configuration
-# NOTE: appsettings.json is intentionally tracked in this repository per project owner's request.
-# WARNING: it contains real connection strings, a JWT signing key and SMTP credentials.
-# Rotate those secrets if this repository is shared. Sanitized *.example.json templates are also kept.
+# appsettings.json is tracked — it now contains NO real secrets (only structure/defaults).
+# Real credentials live in appsettings.Development.json and environment variables, both excluded below.
+
+# *** Credential-bearing files — NEVER commit these ***
+appsettings.Development.json
+.env.api
 
 # Environment files & certificates (still excluded)
 .env

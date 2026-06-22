@@ -1,170 +1,302 @@
-<div class="inventory-page">
-	<header class="inventory-header">
-		<div>
-			<h1>Asset Management</h1>
-			<p>Manage and monitor your internal equipment lifecycle.</p>
-		</div>
-		<div class="header-actions" *ngIf="isAdminOrManager()">
-			<button class="btn btn-primary" (click)="openProvisioningModal()">Add Asset</button>
-		</div>
-	</header>
+<div class="space-y-8 font-sans">
+  <!-- Page Header -->
+  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-semibold text-slate-800 tracking-tight">Asset Management</h1>
+      <p class="text-sm text-slate-500 font-medium mt-1">Manage and monitor your internal equipment lifecycle.</p>
+    </div>
+    <div class="flex items-center gap-3" *ngIf="isAdminOrManager()">
+      <button *ngIf="isAdmin()" 
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 shadow-sm transition-all duration-300 disabled:opacity-60" 
+              (click)="runOverdueReminders()" 
+              [disabled]="runningReminders">
+        {{ runningReminders ? 'Running Sweep...' : 'Trigger Overdue Reminders' }}
+      </button>
+      <button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all duration-300" (click)="openProvisioningModal()">
+        Add Asset
+      </button>
+    </div>
+  </header>
 
-	<div class="alerts" *ngIf="errorMessage || apiConnectionMessage || toastMessage">
-		<div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
-		<div class="alert alert-warning" *ngIf="apiConnectionMessage">{{ apiConnectionMessage }}</div>
-		<div class="alert" *ngIf="toastMessage" [class.alert-success]="toastType === 'success'" [class.alert-error]="toastType === 'error'" [class.alert-info]="toastType === 'info'">{{ toastMessage }}</div>
-	</div>
+  <!-- Alerts -->
+  <div class="space-y-3" *ngIf="errorMessage || apiConnectionMessage || toastMessage">
+    <div class="p-4 rounded-xl border border-rose-200 bg-rose-50 text-sm font-semibold text-rose-800 shadow-sm" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+    <div class="p-4 rounded-xl border border-amber-200 bg-amber-50 text-sm font-semibold text-amber-800 shadow-sm" *ngIf="apiConnectionMessage">
+      {{ apiConnectionMessage }}
+    </div>
+    <div class="p-4 rounded-xl border text-sm font-semibold shadow-sm" *ngIf="toastMessage"
+         [class.border-emerald-200]="toastType === 'success'" [class.bg-emerald-50]="toastType === 'success'" [class.text-emerald-800]="toastType === 'success'"
+         [class.border-rose-200]="toastType === 'error'" [class.bg-rose-50]="toastType === 'error'" [class.text-rose-800]="toastType === 'error'"
+         [class.border-blue-200]="toastType === 'info'" [class.bg-blue-50]="toastType === 'info'" [class.text-blue-800]="toastType === 'info'">
+      {{ toastMessage }}
+    </div>
+  </div>
 
-	<div *ngIf="metrics" class="kpi-grid">
-		<article class="kpi-card kpi-card-primary">
-			<span>Total Investment</span>
-			<strong>{{ (metrics.totalValuation ?? metrics.TotalValuation) | currency:'ZAR':'symbol':'1.2-2' }}</strong>
-			<small>{{ metrics.totalAssets ?? metrics.TotalAssets }} assets tracked</small>
-		</article>
+  <!-- Metrics Grid -->
+  <div *ngIf="metrics" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <article class="p-6 rounded-2xl bg-indigo-600 text-white shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+      <span class="text-xs font-semibold uppercase tracking-wider text-indigo-100">Total Investment</span>
+      <strong class="block text-2xl font-bold mt-2">{{ (metrics.totalValuation ?? metrics.TotalValuation) | currency:'ZAR':'symbol':'1.2-2' }}</strong>
+      <small class="block text-xs mt-1 text-indigo-200">{{ metrics.totalAssets ?? metrics.TotalAssets }} assets tracked</small>
+    </article>
 
-		<article class="kpi-card">
-			<span>Available Assets</span>
-			<strong>{{ metrics.distribution?.available ?? metrics.Distribution?.Available }}</strong>
-			<small>Ready to assign</small>
-		</article>
+    <article class="p-6 rounded-2xl bg-white border border-slate-100 text-slate-800 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+      <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Available Assets</span>
+      <strong class="block text-2xl font-bold mt-2 text-slate-800">{{ metrics.distribution?.available ?? metrics.Distribution?.Available }}</strong>
+      <small class="block text-xs mt-1 text-slate-500 font-medium">Ready to assign</small>
+    </article>
 
-		<article class="kpi-card">
-			<span>Checked Out</span>
-			<strong>{{ metrics.distribution?.checkedOut ?? metrics.Distribution?.CheckedOut }}</strong>
-			<small>Currently in use</small>
-		</article>
+    <article class="p-6 rounded-2xl bg-white border border-slate-100 text-slate-800 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+      <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Checked Out</span>
+      <strong class="block text-2xl font-bold mt-2 text-slate-800">{{ metrics.distribution?.checkedOut ?? metrics.Distribution?.CheckedOut }}</strong>
+      <small class="block text-xs mt-1 text-slate-500 font-medium">Currently in use</small>
+    </article>
 
-		<article class="kpi-card">
-			<span>Under Maintenance</span>
-			<strong>{{ metrics.distribution?.underMaintenance ?? metrics.Distribution?.UnderMaintenance }}</strong>
-			<small>Temporarily unavailable</small>
-		</article>
-	</div>
+    <article class="p-6 rounded-2xl bg-white border border-slate-100 text-slate-800 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+      <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Under Maintenance</span>
+      <strong class="block text-2xl font-bold mt-2 text-slate-800">{{ metrics.distribution?.underMaintenance ?? metrics.Distribution?.UnderMaintenance }}</strong>
+      <small class="block text-xs mt-1 text-slate-500 font-medium">In repairs</small>
+    </article>
+  </div>
 
-	<section class="inventory-panel">
-		<div class="filter-bar">
-			<div class="field-group field-search">
-				<label>Search</label>
-				<input type="text" [(ngModel)]="searchTerm" placeholder="Search by asset name or serial" />
-			</div>
+  <!-- Filters & Table Panel -->
+  <section class="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+    <!-- Filter Bar -->
+    <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-end gap-4 justify-between">
+      <div class="flex flex-wrap items-center gap-4 flex-1">
+        <div class="flex flex-col gap-1 min-w-[200px] flex-1 sm:flex-initial">
+          <label class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Search</label>
+          <input type="text" [(ngModel)]="searchTerm" placeholder="Search asset name or serial..."
+                 class="h-10 px-3.5 border border-slate-300 rounded-xl text-sm bg-white text-slate-900 shadow-sm focus:outline-none focus:border-brand-primary focus:ring-3 focus:ring-brand-primary/15 transition-all" />
+        </div>
 
-			<div class="field-group">
-				<label>Status</label>
-				<select [(ngModel)]="statusFilter">
-					<option value="">All statuses</option>
-					<option value="Available">Available</option>
-					<option value="Checked Out">Checked Out</option>
-					<option value="Under Maintenance">Under Maintenance</option>
-					<option *ngIf="isAdminOrManager()" value="Decommissioned">Decommissioned</option>
-				</select>
-			</div>
+        <div class="flex flex-col gap-1 min-w-[150px]">
+          <label class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Status</label>
+          <select [(ngModel)]="statusFilter"
+                  class="h-10 px-3.5 border border-slate-300 rounded-xl text-sm bg-white text-slate-900 shadow-sm focus:outline-none focus:border-brand-primary focus:ring-3 focus:ring-brand-primary/15 transition-all">
+            <option value="">All statuses</option>
+            <option value="Available">Available</option>
+            <option value="Checked Out">Checked Out</option>
+            <option value="Under Maintenance">Under Maintenance</option>
+            <option *ngIf="isAdminOrManager()" value="Decommissioned">Decommissioned</option>
+          </select>
+        </div>
 
-			<div class="field-group">
-				<label>Category</label>
-				<select [(ngModel)]="categoryFilter">
-					<option value="">All categories</option>
-					<option *ngFor="let cat of availableCategories" [value]="cat">{{ cat }}</option>
-				</select>
-			</div>
+        <div class="flex flex-col gap-1 min-w-[150px]">
+          <label class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Category</label>
+          <select [(ngModel)]="categoryFilter"
+                  class="h-10 px-3.5 border border-slate-300 rounded-xl text-sm bg-white text-slate-900 shadow-sm focus:outline-none focus:border-brand-primary focus:ring-3 focus:ring-brand-primary/15 transition-all">
+            <option value="">All categories</option>
+            <option *ngFor="let cat of availableCategories" [value]="cat">{{ cat }}</option>
+          </select>
+        </div>
 
-			<div class="field-group">
-				<label>Min Value</label>
-				<input type="number" [(ngModel)]="minValueFilter" placeholder="500" />
-			</div>
+        <div class="flex flex-col gap-1 min-w-[100px] w-24">
+          <label class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Min Value</label>
+          <input type="number" [(ngModel)]="minValueFilter" placeholder="500"
+                 class="h-10 px-3.5 border border-slate-300 rounded-xl text-sm bg-white text-slate-900 shadow-sm focus:outline-none focus:border-brand-primary focus:ring-3 focus:ring-brand-primary/15 transition-all" />
+        </div>
+      </div>
 
-			<div class="records-summary">{{ filteredAssets.length }} of {{ assets.length }} records</div>
-		</div>
+      <div class="text-xs font-bold text-slate-500 whitespace-nowrap bg-slate-200/50 py-1.5 px-3 rounded-full">{{ filteredAssets.length }} of {{ assets.length }} records</div>
+    </div>
 
-		<div class="table-shell">
-			<table class="asset-table">
-				<thead>
-					<tr>
-						<th>Asset</th>
-						<th>Serial</th>
-						<th>Category</th>
-						<th>Value</th>
-						<th>Status</th>
-						<th>Actions</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr *ngFor="let asset of filteredAssets">
-						<td>
-							<div class="asset-title">{{ asset.name }}</div>
-							<div class="asset-subtitle" *ngIf="asset.assignedTo">Assigned to: {{ asset.assignedTo }}</div>
-						</td>
-						<td class="mono">{{ asset.serialNumber }}</td>
-						<td>{{ asset.category }}</td>
-						<td class="amount">{{ asset.value | currency:'ZAR':'symbol':'1.2-2' }}</td>
-						<td><app-status-chip [status]="asset.status"></app-status-chip></td>
-						<td *ngIf="isAdminOrManager()" class="action-cell">
-							<button class="btn btn-muted" (click)="$event.stopPropagation(); openEditAssetDrawer(asset)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Edit' }}</button>
-							<button class="btn btn-success" *ngIf="asset.status === 'Available'" (click)="$event.stopPropagation(); openCheckoutDrawer(asset)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Assign' }}</button>
-							<button class="btn btn-warning" *ngIf="asset.status === 'Checked Out'" (click)="$event.stopPropagation(); handleReturn(asset.assetID)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Return' }}</button>
-							<button class="btn btn-muted" *ngIf="asset.status === 'Checked Out'" (click)="$event.stopPropagation(); forceReturnAsset(asset)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Force Return' }}</button>
-							<button class="btn btn-warning" *ngIf="asset.status === 'Available'" (click)="$event.stopPropagation(); toggleMaintenance(asset, true)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Maintenance' }}</button>
-							<button class="btn btn-success" *ngIf="asset.status === 'Under Maintenance'" (click)="$event.stopPropagation(); toggleMaintenance(asset, false)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Clear' }}</button>
-							<button class="btn btn-primary" *ngIf="asset.status === 'Decommissioned'" (click)="$event.stopPropagation(); restoreAsset(asset)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Restore' }}</button>
-							<button class="btn btn-danger" *ngIf="asset.status !== 'Decommissioned'" (click)="$event.stopPropagation(); decommissionAsset(asset)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Decommission' }}</button>
-						</td>
-						<td *ngIf="!isAdminOrManager() && asset.status === 'Available'" class="action-cell">
-							<button class="btn btn-success" (click)="$event.stopPropagation(); openCheckoutDrawer(asset)" [disabled]="busyAssetId === asset.assetID">{{ busyAssetId === asset.assetID ? '...' : 'Checkout' }}</button>
-						</td>
-						<td *ngIf="!isAdminOrManager() && asset.status !== 'Available'" class="action-cell">—</td>
-					</tr>
-					<tr *ngIf="filteredAssets.length === 0 && !errorMessage">
-							<td colspan="6" class="empty-state">No hardware assets found in inventory.</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-	</section>
+    <!-- Table content -->
+    <div class="overflow-x-auto custom-scrollbar min-h-[280px]">
+
+      <!-- Loading skeletons -->
+      <div *ngIf="loading" class="p-6 space-y-4">
+        <div class="grid grid-cols-6 gap-4">
+          <div class="h-4 shimmer-bg col-span-2"></div>
+          <div class="h-4 shimmer-bg"></div>
+          <div class="h-4 shimmer-bg"></div>
+          <div class="h-4 shimmer-bg"></div>
+          <div class="h-4 shimmer-bg"></div>
+        </div>
+        <hr class="border-slate-100" />
+        <div class="grid grid-cols-6 gap-4">
+          <div class="h-4 shimmer-bg col-span-2"></div>
+          <div class="h-4 shimmer-bg"></div>
+          <div class="h-4 shimmer-bg"></div>
+          <div class="h-4 shimmer-bg"></div>
+          <div class="h-4 shimmer-bg"></div>
+        </div>
+        <hr class="border-slate-100" />
+        <div class="grid grid-cols-6 gap-4">
+          <div class="h-4 shimmer-bg col-span-2"></div>
+          <div class="h-4 shimmer-bg"></div>
+          <div class="h-4 shimmer-bg"></div>
+          <div class="h-4 shimmer-bg"></div>
+          <div class="h-4 shimmer-bg"></div>
+        </div>
+      </div>
+
+      <table class="w-full border-collapse text-left text-sm" *ngIf="!loading">
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+            <th class="p-5 pl-6">Asset Name</th>
+            <th class="p-5">Serial Number</th>
+            <th class="p-5">Category</th>
+            <th class="p-5 text-right">Value</th>
+            <th class="p-5">Status</th>
+            <th class="p-5 text-right pr-6">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <ng-container *ngFor="let asset of filteredAssets">
+            <!-- Main row (clickable details expander) -->
+            <tr (click)="toggleExpand(asset.assetID, $event)" 
+                class="hover:bg-slate-50 cursor-pointer transition-colors group">
+              <td class="p-4 pl-6">
+                <div class="font-bold text-slate-900 group-hover:text-brand-primary transition-colors">{{ asset.name }}</div>
+                <div class="text-xs text-slate-500 font-medium mt-0.5" *ngIf="asset.assignedTo">Assigned to: {{ asset.assignedTo }}</div>
+              </td>
+              <td class="p-4 font-mono text-xs text-slate-600 font-semibold">{{ asset.serialNumber }}</td>
+              <td class="p-4 font-medium text-slate-600">{{ asset.category }}</td>
+              <td class="p-4 text-right font-bold text-slate-900">{{ asset.value | currency:'ZAR':'symbol':'1.2-2' }}</td>
+              <td class="p-4"><app-status-chip [status]="asset.status"></app-status-chip></td>
+              <td class="p-4 text-right pr-6" (click)="$event.stopPropagation()">
+                <!-- Actions Dropdown -->
+                <div *ngIf="isAdminOrManager()" class="action-dropdown-wrap">
+                  <button class="btn-action-trigger" (click)="toggleDropdown(asset.assetID, $event)" [disabled]="busyAssetId === asset.assetID">⋮</button>
+                  <div class="action-dropdown-menu" *ngIf="openDropdownId === asset.assetID">
+                    <button class="dropdown-item" (click)="openEditAssetDrawer(asset)">
+                      Edit Details
+                    </button>
+                    <button class="dropdown-item success-item" *ngIf="asset.status === 'Available'" (click)="openCheckoutDrawer(asset)">
+                      Assign Asset
+                    </button>
+                    <button class="dropdown-item" *ngIf="asset.status === 'Checked Out'" (click)="handleReturn(asset.assetID)">
+                      Return Asset
+                    </button>
+                    <button class="dropdown-item" *ngIf="asset.status === 'Checked Out'" (click)="forceReturnAsset(asset)">
+                      Force Return
+                    </button>
+                    <button class="dropdown-item" *ngIf="asset.status === 'Available'" (click)="toggleMaintenance(asset, true)">
+                      Maintenance
+                    </button>
+                    <button class="dropdown-item success-item" *ngIf="asset.status === 'Under Maintenance'" (click)="toggleMaintenance(asset, false)">
+                      Clear Maintenance
+                    </button>
+                    <button class="dropdown-item success-item" *ngIf="asset.status === 'Decommissioned'" (click)="restoreAsset(asset)">
+                      Restore Asset
+                    </button>
+                    <button class="dropdown-item danger-item" *ngIf="asset.status !== 'Decommissioned'" (click)="decommissionAsset(asset)">
+                      Decommission
+                    </button>
+                  </div>
+                </div>
+
+                <div *ngIf="!isAdminOrManager() && asset.status === 'Available'">
+                  <button class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-colors" (click)="openCheckoutDrawer(asset)">
+                    Checkout
+                  </button>
+                </div>
+                <div *ngIf="!isAdminOrManager() && asset.status !== 'Available'" class="text-xs text-slate-400 font-semibold pr-2">—</div>
+              </td>
+            </tr>
+
+            <!-- Expanded detail row -->
+            <tr *ngIf="expandedAssetId === asset.assetID" class="bg-slate-50/80 border-b border-slate-100">
+              <td colspan="6" class="p-6">
+                <div class="bg-white border border-slate-100 rounded-xl p-6 shadow-sm space-y-6">
+                  <div class="grid grid-cols-1 sm:grid-cols-4 gap-6">
+                    <div class="flex flex-col">
+                      <span class="text-xs font-semibold text-slate-400 tracking-wide">Purchase Cost</span>
+                      <span class="text-sm font-semibold text-slate-800 mt-1">{{ asset.value | currency:'ZAR':'symbol':'1.2-2' }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="text-xs font-semibold text-slate-400 tracking-wide">Category</span>
+                      <span class="text-sm font-semibold text-slate-800 mt-1">{{ asset.category }}</span>
+                    </div>
+                    <div class="flex flex-col col-span-2" *ngIf="asset.assignedTo">
+                      <span class="text-xs font-semibold text-slate-400 tracking-wide">Assignment Details</span>
+                      <span class="text-sm font-semibold text-slate-800 mt-1">Currently assigned to {{ asset.assignedTo }}</span>
+                    </div>
+                    <div class="flex flex-col col-span-2" *ngIf="!asset.assignedTo">
+                      <span class="text-xs font-semibold text-slate-400 tracking-wide">Current Assignment</span>
+                      <span class="text-sm font-medium text-slate-500 mt-1">Available in Storage</span>
+                    </div>
+                  </div>
+
+                  <!-- Details quick info block -->
+                  <div class="p-4 bg-slate-50 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-sm text-slate-600">
+                    <div>Lifecycle status is <span class="font-medium text-slate-800">{{ asset.status }}</span>.</div>
+                    <div class="flex gap-3">
+                      <button *ngIf="isAdminOrManager()" (click)="openEditAssetDrawer(asset)" class="text-indigo-600 hover:text-indigo-700 font-semibold text-sm transition-colors">Edit Details</button>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+
+          <tr *ngIf="filteredAssets.length === 0 && !errorMessage">
+            <td colspan="6" class="p-12 text-center text-slate-400 font-bold text-sm">No hardware assets found in inventory.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>
 
+<!-- Drawer Provisioning -->
 <app-drawer [isOpen]="checkoutDrawerOpen" title="Assign Asset" (closeDrawer)="closeCheckoutDrawer()">
-	<div *ngIf="checkoutAssetName" class="drawer-form">
-		<div class="drawer-highlight">
-			<div class="drawer-label">Asset to Assign</div>
-			<div class="drawer-value">{{ checkoutAssetName }}</div>
-		</div>
+  <div *ngIf="checkoutAssetName" class="space-y-5 p-1">
+    <div class="p-4 bg-slate-50 border border-slate-200/80 rounded-xl">
+      <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Asset to Assign</div>
+      <div class="text-base font-extrabold text-slate-900 mt-0.5">{{ checkoutAssetName }}</div>
+    </div>
 
-		<div class="drawer-field" *ngIf="isAdminOrManager()">
-			<label>Select Employee</label>
-			<input type="text" class="employee-search" [(ngModel)]="employeeSearch" placeholder="Type to filter by name, email, or department…" />
-			<select [(ngModel)]="selectedEmployeeId" (ngModelChange)="onEmployeeSelected($event)" size="6">
-				<option [ngValue]="null" disabled>Choose an employee…</option>
-				<option *ngFor="let employee of filteredEmployees" [ngValue]="employee.userID">{{ employee.fullName }} — {{ employee.email }}</option>
-			</select>
-			<small *ngIf="filteredEmployees.length === 0" class="employee-empty">No matching employees.</small>
-		</div>
+    <div class="flex flex-col gap-1.5" *ngIf="isAdminOrManager()">
+      <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Select Employee</label>
+      <input type="text" class="h-10 px-3.5 border border-slate-300 rounded-xl text-sm bg-white text-slate-900 shadow-sm focus:outline-none focus:border-brand-primary focus:ring-3 focus:ring-brand-primary/15 transition-all mb-2" 
+             [(ngModel)]="employeeSearch" placeholder="Type to filter by name, email, or department…" />
+      <select [(ngModel)]="selectedEmployeeId" (ngModelChange)="onEmployeeSelected($event)" size="5"
+              class="border border-slate-300 rounded-xl text-sm bg-white text-slate-900 shadow-sm focus:outline-none focus:border-brand-primary transition-all p-1">
+        <option [ngValue]="null" disabled>Choose an employee…</option>
+        <option *ngFor="let employee of filteredEmployees" [ngValue]="employee.userID">{{ employee.fullName }} — {{ employee.email }}</option>
+      </select>
+      <small *ngIf="filteredEmployees.length === 0" class="text-xs text-rose-500 font-semibold mt-1">No matching employees.</small>
+    </div>
 
-		<div class="drawer-field">
-			<label>Employee Full Name</label>
-			<input type="text" [(ngModel)]="checkoutFullName" placeholder="e.g., Jane Doe" [readonly]="isAdminOrManager()" />
-		</div>
-		<div class="drawer-field">
-			<label>Employee Email</label>
-			<input type="email" [(ngModel)]="checkoutEmail" placeholder="employee@company.com" [readonly]="isAdminOrManager()" />
-		</div>
-		<div class="drawer-field">
-			<label>Expected Return Date (min: today)</label>
-			<input type="date" [(ngModel)]="checkoutExpectedReturnDate" [min]="today | date:'yyyy-MM-dd'" />
-		</div>
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Employee Full Name</label>
+      <input type="text" [(ngModel)]="checkoutFullName" placeholder="e.g., Jane Doe" [readonly]="isAdminOrManager()"
+             class="h-10 px-3.5 border border-slate-300 rounded-xl text-sm bg-slate-100 text-slate-700 shadow-sm focus:outline-none [readOnly]:bg-slate-100 [readOnly]:text-slate-500" />
+    </div>
 
-		<div class="drawer-actions">
-			<button class="btn btn-muted" (click)="clearCheckoutFormWithNotice()">Clear</button>
-			<button class="btn btn-muted" (click)="closeCheckoutDrawer()">Cancel</button>
-			<button class="btn btn-success" (click)="submitCheckout()" [disabled]="busyAssetId !== null">{{ busyAssetId !== null ? 'Processing...' : 'Assign Asset' }}</button>
-		</div>
-	</div>
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Employee Email</label>
+      <input type="email" [(ngModel)]="checkoutEmail" placeholder="employee@company.com" [readonly]="isAdminOrManager()"
+             class="h-10 px-3.5 border border-slate-300 rounded-xl text-sm bg-slate-100 text-slate-700 shadow-sm focus:outline-none [readOnly]:bg-slate-100 [readOnly]:text-slate-500" />
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Expected Return Date</label>
+      <input type="date" [(ngModel)]="checkoutExpectedReturnDate" [min]="today | date:'yyyy-MM-dd'"
+             class="h-10 px-3.5 border border-slate-300 rounded-xl text-sm bg-white text-slate-900 shadow-sm focus:outline-none focus:border-brand-primary focus:ring-3 focus:ring-brand-primary/15 transition-all" />
+    </div>
+
+    <div class="flex justify-end gap-2.5 pt-4 border-t border-slate-100">
+      <button class="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-xl shadow-sm transition-colors" (click)="clearCheckoutFormWithNotice()">Clear</button>
+      <button class="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-xl shadow-sm transition-colors" (click)="closeCheckoutDrawer()">Cancel</button>
+      <button class="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md transition-colors" (click)="submitCheckout()" [disabled]="busyAssetId !== null">
+        {{ busyAssetId !== null ? 'Processing...' : 'Assign Asset' }}
+      </button>
+    </div>
+  </div>
 </app-drawer>
 
+<!-- Modals -->
 <app-confirmation-dialog
-	[open]="confirmationModalOpen"
-	[title]="confirmationTitle"
-	[message]="confirmationMessage"
-	(confirmed)="confirmAction()"
-	(cancelled)="cancelConfirmation()">
+  [open]="confirmationModalOpen"
+  [title]="confirmationTitle"
+  [message]="confirmationMessage"
+  (confirmed)="confirmAction()"
+  (cancelled)="cancelConfirmation()">
 </app-confirmation-dialog>
 
 <app-asset-modal #provisionModal (assetCreated)="loadInventory()"></app-asset-modal>

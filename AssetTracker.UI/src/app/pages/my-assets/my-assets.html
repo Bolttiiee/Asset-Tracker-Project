@@ -1,51 +1,64 @@
-<div class="my-assets-page">
-  <header class="page-header">
+<div class="space-y-6">
+  <!-- Page Header -->
+  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1>My Checked-Out Assets</h1>
-      <p>Track active checkouts, overdue returns, and complete returns quickly.</p>
+      <h1 class="text-3xl font-semibold text-slate-800 tracking-tight">My Checked-Out Assets</h1>
+      <p class="text-sm text-slate-500 font-medium mt-1">Track active checkouts, overdue returns, and complete returns quickly.</p>
     </div>
-    <button class="btn btn-primary" (click)="loadMyAssets()" [disabled]="loading">{{ loading ? 'Refreshing...' : 'Refresh' }}</button>
+    <div>
+      <button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all duration-300" (click)="loadMyAssets()" [disabled]="loading">
+        {{ loading ? 'Refreshing...' : 'Refresh' }}
+      </button>
+    </div>
   </header>
 
-  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
-  <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
-  <div *ngIf="loading" class="loading-row">Loading assets...</div>
+  <!-- Alerts -->
+  <div class="space-y-3" *ngIf="successMessage || errorMessage || loading">
+    <div *ngIf="successMessage" class="p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-sm font-semibold text-emerald-800 shadow-sm">{{ successMessage }}</div>
+    <div *ngIf="errorMessage" class="p-4 rounded-xl border border-rose-200 bg-rose-50 text-sm font-semibold text-rose-800 shadow-sm animate-pulse">{{ errorMessage }}</div>
+    <div *ngIf="loading" class="p-6 text-center text-slate-400 font-bold text-sm">Loading assets...</div>
+  </div>
 
-  <section *ngIf="!loading" class="data-panel">
-    <div class="table-shell">
-      <table class="data-table">
+  <!-- Assets Table -->
+  <section *ngIf="!loading" class="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full border-collapse text-left text-sm">
         <thead>
-          <tr>
-            <th>Asset</th>
-            <th>Category</th>
-            <th>Serial</th>
-            <th>Checkout Date</th>
-            <th>Expected Return</th>
-            <th>Status</th>
-            <th>Action</th>
+          <tr class="bg-slate-50 border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+            <th class="p-5 pl-6">Asset</th>
+            <th class="p-5">Category</th>
+            <th class="p-5">Serial</th>
+            <th class="p-5">Checkout Date</th>
+            <th class="p-5">Expected Return</th>
+            <th class="p-5">Status</th>
+            <th class="p-5 text-right pr-6">Action</th>
           </tr>
         </thead>
-        <tbody>
-          <tr *ngFor="let item of assets" [class.row-overdue]="item.isOverdue">
-            <td class="asset-title-cell">{{ item.assetName }}</td>
-            <td>{{ item.category }}</td>
-            <td class="mono">{{ item.serialNumber }}</td>
-            <td>{{ item.checkoutDate | date:'mediumDate' }}</td>
-            <td>
-              <div class="due-wrap">
-                {{ item.expectedReturnDate | date:'mediumDate' }}
-                <span *ngIf="item.isOverdue" class="overdue-pill">{{ getDaysOverdue(item.expectedReturnDate) }} days overdue</span>
+        <tbody class="divide-y divide-slate-100">
+          <tr *ngFor="let item of assets" 
+              [class.bg-rose-50]="item.isOverdue"
+              class="hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0">
+            <td class="p-4 pl-6 font-semibold text-slate-800">{{ item.assetName }}</td>
+            <td class="p-4 font-medium text-slate-500">{{ item.category }}</td>
+            <td class="p-4 font-mono text-xs text-slate-500 font-semibold">{{ item.serialNumber }}</td>
+            <td class="p-4 text-slate-500 font-medium">{{ item.checkoutDate | date:'mediumDate' }}</td>
+            <td class="p-4">
+              <div class="flex flex-wrap items-center gap-2 font-medium">
+                <span class="text-slate-600">{{ item.expectedReturnDate | date:'mediumDate' }}</span>
+                <span *ngIf="item.isOverdue" class="text-rose-700 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold">{{ getDaysOverdue(item.expectedReturnDate) }} days overdue</span>
               </div>
             </td>
-            <td>
-              <app-status-chip [status]="'Checked Out'"></app-status-chip>
+            <td class="p-4">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide bg-amber-50 text-amber-700 border border-amber-100">Checked Out</span>
             </td>
-            <td>
-              <button class="btn btn-success" (click)="returnAsset(item)" [disabled]="returningAssetId === item.assetID">{{ returningAssetId === item.assetID ? 'Returning...' : 'Return' }}</button>
+            <td class="p-4 text-right pr-6">
+              <button class="px-4 py-2 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 shadow-sm transition-colors" (click)="returnAsset(item)" [disabled]="returningAssetId === item.assetID">
+                {{ returningAssetId === item.assetID ? 'Returning...' : 'Return Asset' }}
+              </button>
             </td>
           </tr>
           <tr *ngIf="assets.length === 0">
-            <td colspan="7" class="empty-state">No active checkout records found.</td>
+            <td colspan="7" class="p-12 text-center text-slate-400 font-bold text-sm">No active checkout records found.</td>
           </tr>
         </tbody>
       </table>

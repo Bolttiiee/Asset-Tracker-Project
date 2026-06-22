@@ -5,7 +5,12 @@ using System.Net.Sockets;
 
 namespace AssetTracker.API.Services
 {
-    public class EmailService : IEmailService
+    /// <summary>
+    /// Email service implementation backed by SMTP (e.g. Gmail).
+    /// Activated when Email:Provider = "SMTP" (the default) is set in configuration.
+    /// Credentials required: Email:SmtpUser and Email:SmtpPassword.
+    /// </summary>
+    public class SmtpEmailService : IEmailService
     {
         private readonly IConfiguration _configuration;
         private readonly string _smtpHost;
@@ -16,7 +21,7 @@ namespace AssetTracker.API.Services
         private readonly string _fromName;
         private readonly string _adminEmail;
 
-        public EmailService(IConfiguration configuration)
+        public SmtpEmailService(IConfiguration configuration)
         {
             _configuration = configuration;
             _smtpHost = _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";

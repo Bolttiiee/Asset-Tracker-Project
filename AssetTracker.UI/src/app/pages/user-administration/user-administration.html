@@ -1,28 +1,34 @@
-<div style="padding: 2rem;">
-  <h2 style="margin: 0 0 0.4rem 0; color: #2d3748;">User Administration</h2>
-  <p style="margin: 0 0 1rem 0; color: #718096;">Manage approvals, account status, roles, and password reset</p>
+<div class="space-y-6">
+  <!-- Page Header -->
+  <header>
+    <h2 class="text-3xl font-semibold text-slate-800 tracking-tight">User Administration</h2>
+    <p class="text-sm text-slate-500 font-medium mt-1">Manage approvals, account status, roles, and password reset.</p>
+  </header>
 
   <app-confirmation-dialog
     [open]="confirmationModalOpen"
     [title]="confirmationTitle"
     [message]="confirmationMessage"
+    [cancelLabel]="confirmationCancelLabel"
     (confirmed)="confirmAction()"
     (cancelled)="cancelConfirmation()">
   </app-confirmation-dialog>
 
   <!-- Inline Rejection Modal -->
-  <div *ngIf="rejectModalOpen" style="position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000;">
-    <div style="background: white; border-radius: 8px; padding: 1.5rem; width: 420px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-      <h3 style="margin: 0 0 0.5rem 0; color: #2d3748;">Reject User Account</h3>
-      <p style="margin: 0 0 1rem 0; color: #718096; font-size: 0.9rem;">Provide a reason that will be recorded against this account.</p>
-      <textarea [(ngModel)]="rejectReason" rows="3" placeholder="Enter rejection reason..." style="width: 100%; padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9rem; resize: vertical; box-sizing: border-box;"></textarea>
-      <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
-        <button (click)="cancelReject()" style="border: 1px solid #cbd5e0; background: white; padding: 0.45rem 0.9rem; border-radius: 4px; cursor: pointer; color: #4a5568;">Cancel</button>
-        <button (click)="confirmReject()" [disabled]="!rejectReason.trim()" style="border: none; background: #dd6b20; color: white; padding: 0.45rem 0.9rem; border-radius: 4px; cursor: pointer; opacity: rejectReason.trim() ? 1 : 0.5;">Confirm Reject</button>
+  <div *ngIf="rejectModalOpen" class="modal-backdrop">
+    <div class="modal-content">
+      <h3>Reject User Account</h3>
+      <p>Provide a reason that will be recorded against this account.</p>
+      <textarea [(ngModel)]="rejectReason" rows="3" placeholder="Enter rejection reason..."
+                class="w-full mt-2 p-3 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-brand-primary focus:ring-3 focus:ring-brand-primary/15 transition-all"></textarea>
+      <div class="modal-actions">
+        <button (click)="cancelReject()" class="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-xl shadow-sm transition-colors">Cancel</button>
+        <button (click)="confirmReject()" [disabled]="!rejectReason.trim()" class="px-5 py-2.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-md transition-colors">Confirm Reject</button>
       </div>
     </div>
   </div>
 
+  <!-- Action Toast message -->
   <div *ngIf="actionMessage"
        [ngStyle]="{
          position: 'fixed',
@@ -42,115 +48,162 @@
        aria-live="polite">
     {{ actionMessage }}
   </div>
-  <div *ngIf="errorMessage" style="background: #fed7d7; color: #9b2c2c; border-left: 4px solid #9b2c2c; padding: 0.9rem; border-radius: 4px; margin-bottom: 0.8rem;">
+  
+  <div *ngIf="errorMessage" class="p-4 rounded-xl border border-rose-200 bg-rose-50 text-sm font-semibold text-rose-800 shadow-sm animate-pulse">
     {{ errorMessage }}
   </div>
 
-  <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem;">
-    <input [(ngModel)]="filters.search" (input)="loadUsers()" placeholder="Search name/email" style="padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; width: 220px;" />
-    <input [(ngModel)]="filters.department" (input)="loadUsers()" placeholder="Department" style="padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; width: 180px;" />
-    <select [(ngModel)]="filters.role" (ngModelChange)="loadUsers()" style="padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; width: 170px;">
+  <!-- Filters Row -->
+  <div class="flex flex-wrap gap-4 bg-white border border-slate-100 p-5 rounded-2xl shadow-sm items-center">
+    <input [(ngModel)]="filters.search" (input)="loadUsers()" placeholder="Search name/email..."
+           class="h-10 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all w-full sm:w-[220px]" />
+    <input [(ngModel)]="filters.department" (input)="loadUsers()" placeholder="Department..."
+           class="h-10 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all w-full sm:w-[180px]" />
+    
+    <select [(ngModel)]="filters.role" (ngModelChange)="loadUsers()"
+            class="h-10 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all w-full sm:w-[170px]">
       <option value="">All Roles</option>
       <option value="Standard User">Standard User</option>
       <option value="Asset Manager">Asset Manager</option>
       <option value="Admin">Administrator</option>
     </select>
-    <select [(ngModel)]="filters.status" (ngModelChange)="loadUsers()" style="padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; width: 170px;">
+    
+    <select [(ngModel)]="filters.status" (ngModelChange)="loadUsers()"
+            class="h-10 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all w-full sm:w-[170px]">
       <option value="">All Statuses</option>
       <option value="Pending">Pending</option>
       <option value="Active">Active</option>
       <option value="Rejected">Rejected</option>
       <option value="Inactive">Inactive</option>
     </select>
-    <button (click)="loadUsers()" [disabled]="loading" style="background: #2b6cb0; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">{{ loading ? 'Applying...' : 'Apply' }}</button>
+
+    <button (click)="loadUsers()" [disabled]="loading" class="h-10 px-6 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors disabled:opacity-60 ml-auto">
+      {{ loading ? 'Applying...' : 'Apply Filters' }}
+    </button>
   </div>
 
-  <div *ngIf="loading" style="padding: 0.8rem; color: #4a5568;">Loading users...</div>
+  <div *ngIf="loading" class="p-6 text-center text-slate-400 font-bold text-sm">Loading users...</div>
 
-  <table *ngIf="!loading" style="width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; background: white; font-size: 0.88rem;">
-    <thead>
-      <tr style="background: #f7fafc; text-align: left; color: #4a5568;">
-        <th style="padding: 0.7rem;">Name</th>
-        <th style="padding: 0.7rem;">Email</th>
-        <th style="padding: 0.7rem;">Department</th>
-        <th style="padding: 0.7rem;">Employee ID</th>
-        <th style="padding: 0.7rem;">Registered</th>
-        <th style="padding: 0.7rem;">Role</th>
-        <th style="padding: 0.7rem;">Status</th>
-        <th style="padding: 0.7rem; text-align: right;">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let user of users" style="border-top: 1px solid #edf2f7;">
-        <td style="padding: 0.7rem; font-weight: 600; color: #2d3748;">{{ user.fullName }}</td>
-        <td style="padding: 0.7rem; color: #4a5568;">{{ user.email }}</td>
-        <td style="padding: 0.7rem; color: #718096;">{{ user.department || '—' }}</td>
-        <td style="padding: 0.7rem; font-family: monospace; color: #4a5568;">{{ user.employeeID || '—' }}</td>
-        <td style="padding: 0.7rem; color: #718096; white-space: nowrap;">{{ user.registrationDate | date:'dd MMM yyyy' }}</td>
-        <td style="padding: 0.7rem;">
-          <select [ngModel]="user.role" (ngModelChange)="changeRole(user, $event)" [disabled]="busyUserId === user.userID" style="padding: 0.35rem; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85rem;">
-            <option value="Standard User">Standard User</option>
-            <option value="Asset Manager">Asset Manager</option>
-            <option value="Admin">Administrator</option>
-          </select>
-        </td>
-        <td style="padding: 0.7rem;">
-          <div>
-            <span [ngStyle]="{
-              background: user.accountStatus === 'Active' ? '#c6f6d5' :
-                          user.accountStatus === 'Inactive' ? '#fed7d7' :
-                          user.accountStatus === 'Pending' ? '#fefcbf' :
-                          user.accountStatus === 'Rejected' ? '#4a5568' : '#e2e8f0',
-              color: user.accountStatus === 'Active' ? '#22543d' :
-                     user.accountStatus === 'Inactive' ? '#9b2c2c' :
-                     user.accountStatus === 'Pending' ? '#744210' :
-                     user.accountStatus === 'Rejected' ? '#ffffff' : '#4a5568',
-              padding: '0.2rem 0.6rem',
-              borderRadius: '999px',
-              fontSize: '0.78rem',
-              fontWeight: '600',
-              display: 'inline-block'
-            }">{{ user.accountStatus }}</span>
-            <div *ngIf="user.accountStatus === 'Rejected' && user.rejectionReason" style="margin-top: 0.3rem; font-size: 0.75rem; color: #718096; font-style: italic; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="user.rejectionReason">
-              Reason: {{ user.rejectionReason }}
-            </div>
-          </div>
-        </td>
-        <td style="padding: 0.7rem; text-align: right; display: flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: wrap;">
-          <button (click)="openUser(user.userID)" [disabled]="busyUserId === user.userID" style="border: 1px solid #cbd5e0; background: white; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem;">View</button>
-          <button *ngIf="user.accountStatus === 'Pending'" (click)="approveUser(user)" [disabled]="busyUserId === user.userID" style="border: none; background: #319795; color: white; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem;">
-            {{ busyUserId === user.userID ? '...' : 'Approve' }}
-          </button>
-          <button *ngIf="user.accountStatus === 'Pending'" (click)="rejectUser(user)" [disabled]="busyUserId === user.userID" style="border: none; background: #dd6b20; color: white; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem;">Reject</button>
-          <button (click)="toggleActivation(user)" [disabled]="busyUserId === user.userID || user.accountStatus === 'Pending' || user.accountStatus === 'Rejected'" style="border: none; background: #4a5568; color: white; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem; opacity: (user.accountStatus === 'Pending' || user.accountStatus === 'Rejected') ? 0.4 : 1;">
-            {{ busyUserId === user.userID ? '...' : (user.accountStatus === 'Active' ? 'Deactivate' : 'Activate') }}
-          </button>
-          <button (click)="resetPassword(user)" [disabled]="busyUserId === user.userID" style="border: none; background: #2b6cb0; color: white; padding: 0.35rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.82rem;">
-            {{ busyUserId === user.userID ? '...' : 'Reset Password' }}
-          </button>
-        </td>
-      </tr>
-      <tr *ngIf="users.length === 0">
-        <td colspan="8" style="padding: 1rem; text-align: center; color: #718096;">No users found for current filters.</td>
-      </tr>
-    </tbody>
-  </table>
+  <!-- Users Table Card -->
+  <div class="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden" *ngIf="!loading">
+    <div class="overflow-x-auto custom-scrollbar min-h-[280px]">
+      <table class="w-full border-collapse text-left text-sm">
 
-  <div *ngIf="selectedUser" style="margin-top: 1rem; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; background: #f8fafc;">
-    <h3 style="margin: 0 0 0.5rem 0; color: #2d3748;">{{ selectedUser.fullName }} — Current Checkouts</h3>
-    <div style="font-size: 0.85rem; color: #718096; margin-bottom: 0.5rem;">
-      {{ selectedUser.department }} · {{ selectedUser.employeeID }} · {{ selectedUser.email }}
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+            <th class="p-5 pl-6">Name</th>
+            <th class="p-5">Email</th>
+            <th class="p-5">Department</th>
+            <th class="p-5">Employee ID</th>
+            <th class="p-5">Registered</th>
+            <th class="p-5">Role</th>
+            <th class="p-5">Status</th>
+            <th class="p-5 text-right pr-6">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <ng-container *ngFor="let user of users">
+            <!-- Row toggler expander -->
+            <tr (click)="user.accountStatus === 'Active' && toggleExpand(user.userID, $event)" 
+                [class.cursor-pointer]="user.accountStatus === 'Active'"
+                [class.hover:bg-slate-50]="user.accountStatus === 'Active'"
+                class="transition-colors group">
+              <td class="p-4 pl-6 font-semibold text-slate-800 group-hover:text-indigo-600 transition-colors">{{ user.fullName }}</td>
+              <td class="p-4 text-slate-500 font-medium">{{ user.email }}</td>
+              <td class="p-4 text-slate-500 font-medium">{{ user.department || '—' }}</td>
+              <td class="p-4 font-mono text-xs text-slate-500 font-semibold">{{ user.employeeID || '—' }}</td>
+              <td class="p-4 text-slate-500 font-medium whitespace-nowrap">{{ user.registrationDate | date:'dd MMM yyyy' }}</td>
+              <td class="p-4" (click)="$event.stopPropagation()">
+                <select [ngModel]="user.role" (ngModelChange)="changeRole(user, $event)" [disabled]="busyUserId === user.userID"
+                        class="h-8 px-2 border border-slate-200 rounded-lg text-xs bg-white text-slate-700 focus:outline-none focus:border-indigo-500 transition-all cursor-pointer">
+                  <option value="Standard User">Standard User</option>
+                  <option value="Asset Manager">Asset Manager</option>
+                  <option value="Admin">Administrator</option>
+                </select>
+              </td>
+              <td class="p-4">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide" [ngClass]="{
+                  'bg-emerald-50 text-emerald-700 border border-emerald-100': user.accountStatus === 'Active',
+                  'bg-slate-100 text-slate-600 border border-slate-200': user.accountStatus === 'Inactive',
+                  'bg-amber-50 text-amber-700 border border-amber-100': user.accountStatus === 'Pending',
+                  'bg-rose-50 text-rose-700 border border-rose-100': user.accountStatus === 'Rejected'
+                }">{{ user.accountStatus }}</span>
+                <div *ngIf="user.accountStatus === 'Rejected' && user.rejectionReason" class="text-[10px] text-slate-400 mt-1" [title]="user.rejectionReason">
+                  Reason: {{ user.rejectionReason }}
+                </div>
+              </td>
+              <td class="p-4 text-right pr-6" (click)="$event.stopPropagation()">
+                <!-- Floating Ellipsis Dropdown -->
+                <div class="action-dropdown-wrap">
+                  <button class="btn-action-trigger" (click)="toggleDropdown(user.userID, $event)" [disabled]="busyUserId === user.userID">⋮</button>
+                  <div class="action-dropdown-menu" *ngIf="openDropdownId === user.userID">
+                    <button class="dropdown-item" *ngIf="user.accountStatus === 'Active'" (click)="viewCheckouts(user.userID)">
+                      View Checkouts
+                    </button>
+                    <button class="dropdown-item success-item" *ngIf="user.accountStatus === 'Pending'" (click)="approveUser(user)">
+                      Approve
+                    </button>
+                    <button class="dropdown-item danger-item" *ngIf="user.accountStatus === 'Pending'" (click)="rejectUser(user)">
+                      Reject
+                    </button>
+                    <button class="dropdown-item" *ngIf="user.accountStatus !== 'Pending' && user.accountStatus !== 'Rejected'" (click)="toggleActivation(user)">
+                      {{ user.accountStatus === 'Active' ? 'Deactivate' : 'Activate' }}
+                    </button>
+                    <button class="dropdown-item" (click)="resetPassword(user)">
+                      Reset Password
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Expanded Checkouts / Info accordion inside the table row -->
+            <tr *ngIf="expandedUserId === user.userID" class="bg-slate-50/80 border-b border-slate-100">
+              <td colspan="8" class="p-6">
+                <div class="bg-white border border-slate-100 rounded-xl p-6 shadow-sm space-y-4">
+                  <div class="border-b border-slate-100 pb-4">
+                    <h3 class="font-semibold text-slate-800 text-sm">Account Metadata details</h3>
+                    <div class="text-xs text-slate-500 font-medium mt-1">
+                      Department: {{ user.department || '—' }} · Employee ID: {{ user.employeeID || '—' }} · Email Contact: {{ user.email }}
+                    </div>
+                  </div>
+
+                  <!-- Checkout records list -->
+                  <div *ngIf="selectedUser && selectedUser.userID === user.userID; else loadingCheckouts">
+                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Active Handover Checkouts</div>
+                    <div *ngIf="selectedUser.currentCheckouts.length === 0" class="text-sm text-slate-500 font-medium py-1">No active checkout records assigned.</div>
+                    
+                    <ul *ngIf="selectedUser.currentCheckouts.length > 0" class="divide-y divide-slate-100 max-w-xl border border-slate-100 rounded-lg overflow-hidden">
+                      <li *ngFor="let item of selectedUser.currentCheckouts" class="py-3 px-4 bg-white flex items-center justify-between text-sm font-medium text-slate-700">
+                        <div>
+                          <span class="text-slate-800 font-semibold">{{ item.assetName }}</span> 
+                          <span class="text-slate-400 font-mono text-xs ml-2">({{ item.serialNumber }})</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                          <span class="text-slate-500 text-xs">Due: {{ item.expectedReturnDate | date:'mediumDate' }}</span>
+                          <span *ngIf="item.isOverdue" class="text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold">Overdue</span>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <!-- Loading state -->
+                  <ng-template #loadingCheckouts>
+                    <div class="space-y-3 py-2">
+                      <div class="h-3 shimmer-bg w-1/3"></div>
+                      <div class="h-3 shimmer-bg w-1/2"></div>
+                    </div>
+                  </ng-template>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+
+          <tr *ngIf="users.length === 0">
+            <td colspan="8" class="p-12 text-center text-slate-400 font-bold text-sm">No users found for current filters.</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    <div style="font-size: 0.8rem; color: #718096; margin-bottom: 0.75rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
-      <span *ngIf="selectedUser.approvedBy">Approved by user ID: <strong style="color: #4a5568;">{{ selectedUser.approvedBy }}</strong></span>
-      <span *ngIf="selectedUser.approvalRejectionDate">Approval / Rejection date: <strong style="color: #4a5568;">{{ selectedUser.approvalRejectionDate | date:'dd MMM yyyy, HH:mm' }}</strong></span>
-    </div>
-    <div *ngIf="selectedUser.currentCheckouts.length === 0" style="color: #718096;">No active checkout records.</div>
-    <ul *ngIf="selectedUser.currentCheckouts.length > 0" style="margin: 0; padding-left: 1.2rem; color: #4a5568;">
-      <li *ngFor="let item of selectedUser.currentCheckouts">
-        {{ item.assetName }} ({{ item.serialNumber }}) — due {{ item.expectedReturnDate | date:'mediumDate' }}
-        <strong *ngIf="item.isOverdue" style="color: #c53030;">(Overdue)</strong>
-      </li>
-    </ul>
   </div>
 </div>

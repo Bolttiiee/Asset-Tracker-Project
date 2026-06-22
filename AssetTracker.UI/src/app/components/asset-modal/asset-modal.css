@@ -1,6 +1,7 @@
 /* Darkens the background dashboard grid when the form is active */
 div[style*="fixed"] {
-	backdrop-filter: blur(4px);
+	backdrop-filter: blur(8px);
+	background-color: rgba(15, 23, 42, 0.4) !important;
 	transition: all 0.2s ease-in-out;
 }
 
@@ -8,6 +9,6 @@ div[style*="fixed"] {
 input:focus,
 select:focus {
 	outline: none;
-	border-color: #2b6cb0 !important;
-	box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+	border-color: var(--accent) !important;
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AssetService } from '../../services/asset';
@@ -19,11 +19,25 @@ import { StatusChipComponent } from '../status-chip/status-chip';
 })
 export class InventoryGridComponent implements OnInit {
   assets: Asset[] = [];
+  loading = false;
+  expandedAssetId: number | null = null;
   userRole: string = '';
   errorMessage: string = '';
   apiConnectionMessage: string = '';
   toastMessage: string = '';
   toastType: 'success' | 'error' | 'info' = 'info';
+
+  toggleExpand(id: number, event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (target.closest('.btn-action-trigger') || target.closest('.action-dropdown-menu') || target.closest('button')) {
+      return;
+    }
+    if (this.expandedAssetId === id) {
+      this.expandedAssetId = null;
+    } else {
+      this.expandedAssetId = id;
+    }
+  }
   checkoutDrawerOpen = false;
   checkoutAssetId: number | null = null;
   checkoutAssetName: string = '';
@@ -44,6 +58,22 @@ export class InventoryGridComponent implements OnInit {
   confirmationTitle = '';
   confirmationMessage = '';
   private confirmationAction: (() => void) | null = null;
+  
+  openDropdownId: number | null = null;
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    this.openDropdownId = null;
+  }
+
+  toggleDropdown(id: number, event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.openDropdownId === id) {
+      this.openDropdownId = null;
+    } else {
+      this.openDropdownId = id;
+    }
+  }
 
   get filteredAssets(): any[] {
     return this.assets.filter(asset => {
@@ -136,11 +166,13 @@ export class InventoryGridComponent implements OnInit {
 
   loadInventory(): void {
     this.apiConnectionMessage = '';
+    this.loading = true;
 
     this.assetService.getAssets().subscribe({
       next: (data) => {
         this.assets = data;
         this.apiConnectionMessage = '';
+        this.loading = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -151,6 +183,7 @@ export class InventoryGridComponent implements OnInit {
           ? 'Access denied — insufficient role permissions.'
           : `Failed to load corporate inventory (HTTP ${err?.status}). Check the API server.`;
         console.error(err);
+        this.loading = false;
         this.cdr.markForCheck();
       }
     });

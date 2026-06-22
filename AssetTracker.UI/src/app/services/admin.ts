@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 export interface OverdueReminderResult {
   overdueCount: number;
@@ -26,10 +26,17 @@ export class AdminService {
   }
 
   runOverdueReminders(): Observable<OverdueReminderResult> {
-    return this.http.post<OverdueReminderResult>(
+    return this.http.post<any>(
       `${this.apiUrl}/run-overdue-reminders`,
       {},
       { headers: this.getAuthHeaders() }
+    ).pipe(
+      map(res => ({
+        overdueCount: res.overdueCount,
+        remindersSent: res.emailsSent ?? res.remindersSent,
+        remindersFailed: res.emailsFailed ?? res.remindersFailed,
+        digestSent: res.adminDigestSent ?? res.digestSent
+      }))
     );
   }
 }

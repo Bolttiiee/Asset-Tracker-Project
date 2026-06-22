@@ -22,8 +22,19 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AssetTracker.API.Data.ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register Email Service
-builder.Services.AddScoped<IEmailService, EmailService>();
+// Register Email Service — provider is selected via Email:Provider config key.
+// Set Email__Provider=SendGrid (env var) or "Email": { "Provider": "SendGrid" } (appsettings)
+// to switch from the SMTP fallback to the SendGrid implementation.
+var emailProvider = builder.Configuration["Email:Provider"] ?? "SMTP";
+if (emailProvider.Equals("SendGrid", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddScoped<IEmailService, SendGridEmailService>();
+}
+else
+{
+    builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+}
+
 
 // Register Phone Number Service
 builder.Services.AddScoped<IPhoneNumberService, PhoneNumberService>();

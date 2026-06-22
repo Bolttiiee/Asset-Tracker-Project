@@ -1,94 +1,128 @@
-<div class="auth-page">
-  <section class="data-panel register-panel">
-    <header class="auth-header">
-      <img class="auth-logo" src="/asset-tracker-logo.svg" alt="Asset Tracker" />
-      <h1>Employee Self-Registration</h1>
+<div class="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 sm:px-6 lg:px-8 font-sans">
+  <div class="max-w-xl w-full space-y-8 bg-white p-10 rounded-[24px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
+    <header class="text-center">
+      <img class="mx-auto h-10 w-auto object-contain" src="/asset-tracker-logo.svg" alt="Asset Tracker" />
+      <h2 class="mt-8 text-3xl font-semibold text-slate-800 tracking-tight">Employee Self-Registration</h2>
+      <p class="mt-2 text-sm text-slate-500 font-medium">Request an account to track company hardware.</p>
     </header>
 
-    <div *ngIf="isSuccess" class="alert alert-success register-success">
-      <h4>Registration Successful!</h4>
-      <p>{{ successMessage }}</p>
-      <a routerLink="/login" class="btn btn-primary auth-submit success-login-btn">Back to Sign-In</a>
+    <div *ngIf="isSuccess" class="p-6 rounded-2xl border border-emerald-200 bg-emerald-50 text-center space-y-4">
+      <h4 class="text-lg font-bold text-emerald-955">Registration Successful!</h4>
+      <p class="text-sm text-emerald-800 font-medium">{{ successMessage }}</p>
+      <a routerLink="/login" class="inline-flex items-center justify-center w-full h-11 px-4 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md transition-colors success-login-btn">Back to Sign-In</a>
     </div>
 
-    <div *ngIf="errorMessage" class="alert alert-error">
+    <div *ngIf="errorMessage" class="p-4 rounded-xl border border-rose-200 bg-rose-50 text-sm font-semibold text-rose-800 shadow-sm animate-pulse">
       {{ errorMessage }}
     </div>
 
-    <form *ngIf="!isSuccess" class="auth-form" [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
-    
-    <div class="form-group">
-      <label for="fullName">Full Name *</label>
-      <input type="text" id="fullName" formControlName="fullName" placeholder="John Doe" [style.border-color]="isFieldInvalid('fullName') ? '#e53e3e' : '#cbd5e0'" />
-      <span *ngIf="getFieldError('fullName')" class="error-msg">{{ getFieldError('fullName') }}</span>
-    </div>
-
-    <div class="form-group">
-      <label for="email">Email Address * <span *ngIf="registerForm.get('email')?.pending" class="pending-check">(checking...)</span></label>
-      <input type="email" id="email" formControlName="email" placeholder="john.doe@company.com" [style.border-color]="isFieldInvalid('email') ? '#e53e3e' : '#cbd5e0'" />
-      <span *ngIf="getFieldError('email')" class="error-msg">{{ getFieldError('email') }}</span>
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label for="employeeID">Employee ID * <span *ngIf="registerForm.get('employeeID')?.pending" class="pending-check">(checking...)</span></label>
-        <input type="text" id="employeeID" formControlName="employeeID" placeholder="EMP-12345" [style.border-color]="isFieldInvalid('employeeID') ? '#e53e3e' : '#cbd5e0'" />
-        <span *ngIf="getFieldError('employeeID')" class="error-msg">{{ getFieldError('employeeID') }}</span>
+    <form *ngIf="!isSuccess" class="mt-8 space-y-6" [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="flex flex-col gap-2">
+        <label for="fullName" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Full Name *</label>
+        <input type="text" id="fullName" formControlName="fullName" placeholder="John Doe" 
+               [class.border-rose-300]="isFieldInvalid('fullName')"
+               [class.focus:ring-rose-500/20]="isFieldInvalid('fullName')"
+               [class.focus:border-rose-500]="isFieldInvalid('fullName')"
+               class="h-12 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+        <span *ngIf="getFieldError('fullName')" class="text-xs text-rose-600 font-semibold mt-1">{{ getFieldError('fullName') }}</span>
       </div>
 
-      <div class="form-group">
-        <label for="department">Department / Team *</label>
-        <input type="text" id="department" formControlName="department" placeholder="Information Technology" [style.border-color]="isFieldInvalid('department') ? '#e53e3e' : '#cbd5e0'" />
-        <span *ngIf="getFieldError('department')" class="error-msg">{{ getFieldError('department') }}</span>
+      <div class="flex flex-col gap-2">
+        <label for="email" class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          Email Address * 
+          <span *ngIf="registerForm.get('email')?.pending" class="text-indigo-600 font-semibold lowercase italic text-[11px] ml-1">(checking...)</span>
+        </label>
+        <input type="email" id="email" formControlName="email" placeholder="john.doe@company.com" 
+               [class.border-rose-300]="isFieldInvalid('email')"
+               [class.focus:ring-rose-500/20]="isFieldInvalid('email')"
+               [class.focus:border-rose-500]="isFieldInvalid('email')"
+               class="h-12 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+        <span *ngIf="getFieldError('email')" class="text-xs text-rose-600 font-semibold mt-1">{{ getFieldError('email') }}</span>
       </div>
-    </div>
 
-    <div class="form-group">
-      <label for="phoneNumber">Phone Number (Optional)</label>
-      <input type="text" id="phoneNumber" formControlName="phoneNumber" placeholder="+27 82 123 4567" />
-    </div>
-
-    <div class="form-group">
-      <label for="password">Password *</label>
-      <input type="password" id="password" formControlName="password" placeholder="••••••••" [style.border-color]="isFieldInvalid('password') ? '#e53e3e' : '#cbd5e0'" />
-      
-      <div *ngIf="showPasswordCriteria" class="password-criteria">
-        <div class="strength-wrap">
-          <div class="strength-bar-track">
-            <div [ngStyle]="{'height': '100%', 'background': getPasswordStrength().color, 'width': getPasswordStrength().percent + '%', 'transition': 'width 0.3s ease'}"></div>
-          </div>
-          <small class="strength-label">{{ getPasswordStrength().text }}</small>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-2">
+          <label for="employeeID" class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Employee ID * 
+            <span *ngIf="registerForm.get('employeeID')?.pending" class="text-indigo-600 font-semibold lowercase italic text-[11px] ml-1">(checking...)</span>
+          </label>
+          <input type="text" id="employeeID" formControlName="employeeID" placeholder="EMP-12345" 
+                 [class.border-rose-300]="isFieldInvalid('employeeID')"
+                 [class.focus:ring-rose-500/20]="isFieldInvalid('employeeID')"
+                 [class.focus:border-rose-500]="isFieldInvalid('employeeID')"
+                 class="h-12 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+          <span *ngIf="getFieldError('employeeID')" class="text-xs text-rose-600 font-semibold mt-1">{{ getFieldError('employeeID') }}</span>
         </div>
-        <div class="criteria-list">
-          <div [style.color]="(registerForm.get('password')?.value?.length || 0) >= 8 ? '#319795' : '#718096'">
-            ✓ At least 8 characters
-          </div>
-          <div [style.color]="hasUpperCase() ? '#319795' : '#718096'">
-            ✓ One uppercase letter
-          </div>
-          <div [style.color]="hasNumber() ? '#319795' : '#718096'">
-            ✓ One number
-          </div>
-          <div [style.color]="hasSpecialChar() ? '#319795' : '#718096'">
-            ✓ One special character (!@#$%^&* etc.)
-          </div>
+
+        <div class="flex flex-col gap-2">
+          <label for="department" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Department / Team *</label>
+          <input type="text" id="department" formControlName="department" placeholder="Information Technology" 
+                 [class.border-rose-300]="isFieldInvalid('department')"
+                 [class.focus:ring-rose-500/20]="isFieldInvalid('department')"
+                 [class.focus:border-rose-500]="isFieldInvalid('department')"
+                 class="h-12 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+          <span *ngIf="getFieldError('department')" class="text-xs text-rose-600 font-semibold mt-1">{{ getFieldError('department') }}</span>
         </div>
       </div>
-      
-      <span *ngIf="getFieldError('password')" class="error-msg">{{ getFieldError('password') }}</span>
-    </div>
 
-    <div class="form-group">
-      <label for="confirmPassword">Confirm Password *</label>
-      <input type="password" id="confirmPassword" formControlName="confirmPassword" placeholder="••••••••" [style.border-color]="isFieldInvalid('confirmPassword') ? '#e53e3e' : '#cbd5e0'" />
-      <span *ngIf="getFieldError('confirmPassword')" class="error-msg">{{ getFieldError('confirmPassword') }}</span>
-    </div>
+      <div class="flex flex-col gap-2">
+        <label for="phoneNumber" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Phone Number (Optional)</label>
+        <input type="text" id="phoneNumber" formControlName="phoneNumber" placeholder="+27 82 123 4567" 
+               class="h-12 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+      </div>
 
-    <button type="submit" class="btn btn-primary auth-submit" [disabled]="isSubmitting || registerForm.invalid || registerForm.pending">
-      {{ isSubmitting ? 'Submitting...' : registerForm.pending ? 'Validating...' : 'Submit Registration Account Request' }}
-    </button>
+      <div class="flex flex-col gap-2">
+        <label for="password" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Password *</label>
+        <input type="password" id="password" formControlName="password" placeholder="••••••••" 
+               [class.border-rose-300]="isFieldInvalid('password')"
+               [class.focus:ring-rose-500/20]="isFieldInvalid('password')"
+               [class.focus:border-rose-500]="isFieldInvalid('password')"
+               class="h-12 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+        
+        <div *ngIf="showPasswordCriteria" class="p-4 border border-slate-200 bg-slate-50 rounded-xl space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="h-2 bg-slate-200 rounded-full flex-1 overflow-hidden">
+              <div [ngStyle]="{'background': getPasswordStrength().color, 'width': getPasswordStrength().percent + '%'}" class="h-full transition-all duration-300"></div>
+            </div>
+            <span class="text-xs font-bold text-slate-600 whitespace-nowrap">{{ getPasswordStrength().text }}</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs font-semibold">
+            <div [style.color]="(registerForm.get('password')?.value?.length || 0) >= 8 ? '#059669' : '#64748b'">
+              ✓ At least 8 characters
+            </div>
+            <div [style.color]="hasUpperCase() ? '#059669' : '#64748b'">
+              ✓ One uppercase letter
+            </div>
+            <div [style.color]="hasNumber() ? '#059669' : '#64748b'">
+              ✓ One number
+            </div>
+            <div [style.color]="hasSpecialChar() ? '#059669' : '#64748b'">
+              ✓ One special character
+            </div>
+          </div>
+        </div>
+        
+        <span *ngIf="getFieldError('password')" class="text-xs text-rose-600 font-semibold mt-1">{{ getFieldError('password') }}</span>
+      </div>
 
-    <p class="foot-note">Already have an account? <a routerLink="/login">Sign in here</a></p>
-  </form>
-</section>
+      <div class="flex flex-col gap-2">
+        <label for="confirmPassword" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Confirm Password *</label>
+        <input type="password" id="confirmPassword" formControlName="confirmPassword" placeholder="••••••••" 
+               [class.border-rose-300]="isFieldInvalid('confirmPassword')"
+               [class.focus:ring-rose-500/20]="isFieldInvalid('confirmPassword')"
+               [class.focus:border-rose-500]="isFieldInvalid('confirmPassword')"
+               class="h-12 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+        <span *ngIf="getFieldError('confirmPassword')" class="text-xs text-rose-600 font-semibold mt-1">{{ getFieldError('confirmPassword') }}</span>
+      </div>
+
+      <button type="submit" class="w-full h-12 inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60 disabled:cursor-not-allowed mt-8" [disabled]="isSubmitting || registerForm.invalid || registerForm.pending">
+        {{ isSubmitting ? 'Submitting...' : registerForm.pending ? 'Validating...' : 'Submit Registration Request' }}
+      </button>
+
+      <p class="text-center text-sm text-slate-500 font-medium pt-6 border-t border-slate-100">
+        Already have an account? 
+        <a routerLink="/login" class="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">Sign in here</a>
+      </p>
+    </form>
+  </div>
 </div>

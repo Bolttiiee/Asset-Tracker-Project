@@ -10,7 +10,9 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
           <h3 id="confirmation-dialog-title" class="confirmation-title">{{ title() }}</h3>
           <p id="confirmation-dialog-message" class="confirmation-message">{{ message() }}</p>
           <div class="confirmation-actions">
-            <button type="button" class="confirmation-cancel" (click)="cancelled.emit()">{{ cancelLabel() }}</button>
+            @if (cancelLabel()) {
+              <button type="button" class="confirmation-cancel" (click)="cancelled.emit()">{{ cancelLabel() }}</button>
+            }
             <button type="button" class="confirmation-ok" (click)="confirmed.emit()">{{ confirmLabel() }}</button>
           </div>
         </div>

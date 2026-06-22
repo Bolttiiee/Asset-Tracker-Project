@@ -1,68 +1,78 @@
-<div class="auth-page">
-  <section class="data-panel auth-panel">
-    <header class="auth-header">
-      <img class="auth-logo" src="/asset-tracker-logo.svg" alt="Asset Tracker" />
-      <h1>System Sign-In</h1>
+<div class="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 sm:px-6 lg:px-8 font-sans">
+  <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-[24px] border border-slate-100 shadow-sm transition-all hover:shadow-md">
+    <header class="text-center">
+      <img class="mx-auto h-10 w-auto object-contain" src="/asset-tracker-logo.svg" alt="Asset Tracker" />
+      <h2 class="mt-8 text-3xl font-semibold text-slate-800 tracking-tight">System Sign-In</h2>
+      <p class="mt-2 text-sm text-slate-500 font-medium">Access your hardware asset manager.</p>
     </header>
 
     @if (errorMessage()) {
-      <div class="alert alert-error">
+      <div class="p-4 rounded-xl border border-rose-200 bg-rose-50 text-sm font-semibold text-rose-800 shadow-sm animate-pulse">
         {{ errorMessage() }}
       </div>
     }
 
-    <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
-      <div class="field-group auth-field">
-        <label for="loginEmail">Email Address</label>
-        <input id="loginEmail" type="email" formControlName="email" placeholder="name@company.com" />
-        @if (isSubmitted() && loginForm.get('email')?.errors?.['required']) {
-          <div class="error-msg">Email is required to access the application.</div>
-        }
-      </div>
+    <form class="mt-8 space-y-6" [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="space-y-6">
+        <div class="flex flex-col gap-2">
+          <label for="loginEmail" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Email Address</label>
+          <input id="loginEmail" type="email" formControlName="email" placeholder="name@company.com" 
+                 class="h-12 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+          @if (isSubmitted() && loginForm.get('email')?.errors?.['required']) {
+            <span class="text-xs text-rose-600 font-semibold mt-1">Email is required to access the application.</span>
+          }
+        </div>
 
-      <div class="field-group auth-field">
-        <label for="loginPassword">Password</label>
-        <input id="loginPassword" type="password" formControlName="password" placeholder="••••••••" />
-        @if (isSubmitted() && loginForm.get('password')?.errors?.['required']) {
-          <div class="error-msg">Security key password entry is missing.</div>
-        }
-      </div>
-
-      <div class="forgot-link-row">
-        <button type="button" class="link-action" (click)="triggerForgotPassword()">Forgot Password?</button>
+        <div class="flex flex-col gap-2">
+          <div class="flex justify-between items-center">
+            <label for="loginPassword" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Password</label>
+            <button type="button" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 focus:outline-none transition-colors" (click)="triggerForgotPassword()">Forgot Password?</button>
+          </div>
+          <input id="loginPassword" type="password" formControlName="password" placeholder="••••••••" 
+                 class="h-12 px-4 border border-slate-200 rounded-xl text-sm bg-white text-slate-800 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+          @if (isSubmitted() && loginForm.get('password')?.errors?.['required']) {
+            <span class="text-xs text-rose-600 font-semibold mt-1">Security key password entry is missing.</span>
+          }
+        </div>
       </div>
 
       @if (showForgotPasswordBox()) {
-        <div class="forgot-box" [formGroup]="forgotPasswordForm">
-          <label for="forgotEmail">Recovery Email Address</label>
-          <input id="forgotEmail" type="email" formControlName="email" placeholder="name@company.com" />
+        <div class="p-5 border border-slate-200 bg-slate-50 rounded-xl space-y-4" [formGroup]="forgotPasswordForm">
+          <div class="flex flex-col gap-1.5">
+            <label for="forgotEmail" class="text-xs font-bold uppercase tracking-wider text-slate-500">Recovery Email Address</label>
+            <input id="forgotEmail" type="email" formControlName="email" placeholder="name@company.com" 
+                   class="h-10 px-3.5 border border-slate-300 rounded-xl text-sm bg-white text-slate-900 shadow-sm focus:outline-none focus:border-brand-primary focus:ring-3 focus:ring-brand-primary/15 transition-all" />
 
-          @if (forgotPasswordForm.get('email')?.touched && forgotPasswordForm.get('email')?.invalid) {
-            <div class="error-msg">Please enter a valid corporate email address.</div>
-          }
+            @if (forgotPasswordForm.get('email')?.touched && forgotPasswordForm.get('email')?.invalid) {
+              <span class="text-xs text-rose-600 font-semibold mt-0.5">Please enter a valid corporate email address.</span>
+            }
+          </div>
 
           @if (forgotPasswordMessage()) {
-            <div class="alert alert-success forgot-message">{{ forgotPasswordMessage() }}</div>
+            <div class="p-3.5 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-800 shadow-sm">{{ forgotPasswordMessage() }}</div>
           }
 
           @if (forgotPasswordError()) {
-            <div class="alert alert-error forgot-message">{{ forgotPasswordError() }}</div>
+            <div class="p-3.5 rounded-lg border border-rose-200 bg-rose-50 text-xs font-semibold text-rose-800 shadow-sm">{{ forgotPasswordError() }}</div>
           }
 
-          <div class="forgot-actions">
-            <button type="button" class="btn btn-muted" (click)="cancelForgotPassword()">Cancel</button>
-            <button type="button" class="btn btn-primary" (click)="submitForgotPassword()" [disabled]="isForgotSubmitting()">
+          <div class="flex justify-end gap-2.5">
+            <button type="button" class="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-xl shadow-sm transition-colors" (click)="cancelForgotPassword()">Cancel</button>
+            <button type="button" class="px-4 py-2 text-xs font-bold text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl shadow-sm transition-colors" (click)="submitForgotPassword()" [disabled]="isForgotSubmitting()">
               {{ isForgotSubmitting() ? 'Sending...' : 'Send Reset Token' }}
             </button>
           </div>
         </div>
       }
 
-      <button type="submit" class="btn btn-primary auth-submit" [disabled]="isSubmitting()">
+      <button type="submit" class="w-full h-12 inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60 disabled:cursor-not-allowed mt-8" [disabled]="isSubmitting()">
         {{ isSubmitting() ? 'Authenticating...' : 'Authenticate Credentials' }}
       </button>
 
-      <p class="foot-note">New staff hire? <a routerLink="/register">Request an Account Here</a></p>
+      <p class="text-center text-sm text-slate-500 font-medium pt-6 border-t border-slate-100">
+        New staff hire? 
+        <a routerLink="/register" class="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">Request an Account Here</a>
+      </p>
     </form>
-  </section>
+  </div>
 </div>

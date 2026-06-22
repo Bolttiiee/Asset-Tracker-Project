@@ -6,11 +6,11 @@ using Moq;
 
 namespace AssetTracker.API.Tests.Services
 {
-    public class EmailServiceTests
+    public class SmtpEmailServiceTests
     {
         private readonly Mock<IConfiguration> _mockConfiguration;
 
-        public EmailServiceTests()
+        public SmtpEmailServiceTests()
         {
             _mockConfiguration = new Mock<IConfiguration>();
             SetupConfiguration();
@@ -33,7 +33,7 @@ namespace AssetTracker.API.Tests.Services
         public async Task SendOverdueReminderAsync_WithNullAsset_ThrowsException()
         {
             // Arrange
-            var emailService = new EmailService(_mockConfiguration.Object);
+            var emailService = new SmtpEmailService(_mockConfiguration.Object);
             var checkout = new Checkout
             {
                 CheckoutID = 1,
@@ -51,10 +51,10 @@ namespace AssetTracker.API.Tests.Services
         }
 
         [Fact]
-        public void EmailService_LoadsSmtpConfiguration()
+        public void SmtpEmailService_LoadsSmtpConfiguration()
         {
             // Arrange & Act
-            var emailService = new EmailService(_mockConfiguration.Object);
+            var emailService = new SmtpEmailService(_mockConfiguration.Object);
 
             // Assert
             emailService.Should().NotBeNull();
@@ -63,7 +63,7 @@ namespace AssetTracker.API.Tests.Services
         }
 
         [Fact]
-        public void EmailService_UsesDefaultValuesWhenConfigMissing()
+        public void SmtpEmailService_UsesDefaultValuesWhenConfigMissing()
         {
             // Arrange
             var mockConfig = new Mock<IConfiguration>();
@@ -71,7 +71,7 @@ namespace AssetTracker.API.Tests.Services
             mockConfig.Setup(c => c["Email:SmtpPort"]).Returns((string?)null);
 
             // Act
-            var emailService = new EmailService(mockConfig.Object);
+            var emailService = new SmtpEmailService(mockConfig.Object);
 
             // Assert
             emailService.Should().NotBeNull();
@@ -85,7 +85,7 @@ namespace AssetTracker.API.Tests.Services
         public async Task SendAdminOverdueDigestAsync_WithEmptyList_DoesNotThrow()
         {
             // Arrange
-            var emailService = new EmailService(_mockConfiguration.Object);
+            var emailService = new SmtpEmailService(_mockConfiguration.Object);
             var emptyList = new List<OverdueCheckoutInfo>();
 
             // Act
@@ -99,7 +99,7 @@ namespace AssetTracker.API.Tests.Services
         public async Task SendAdminOverdueDigestAsync_WithOverdueCheckouts_DoesNotThrow()
         {
             // Arrange
-            var emailService = new EmailService(_mockConfiguration.Object);
+            var emailService = new SmtpEmailService(_mockConfiguration.Object);
             var overdueList = new List<OverdueCheckoutInfo>
             {
                 new OverdueCheckoutInfo

@@ -1,27 +1,35 @@
-<div *ngIf="isLoggedIn() && !isAuthRoute(); else authLayout" class="app-shell">
-	<aside class="side-nav" aria-label="Primary">
-		<div class="brand-block">
-			<img class="brand-logo" src="/asset-tracker-logo.svg" alt="Asset Tracker" />
+<div *ngIf="isLoggedIn() && !isAuthRoute(); else authLayout" class="grid grid-cols-[260px_1fr] h-screen overflow-hidden bg-slate-50 font-sans text-slate-800">
+	<aside class="bg-white text-slate-600 p-6 flex flex-col gap-8 border-r border-slate-200 shadow-sm h-screen sticky top-0 overflow-y-auto custom-scrollbar" aria-label="Primary">
+		<div class="flex items-center justify-start pb-4 border-b border-slate-100">
+			<img class="h-8 object-contain" src="/asset-tracker-logo.svg" alt="Asset Tracker" />
 		</div>
 
-		<nav class="nav-group">
-			<a routerLink="/inventory" routerLinkActive="active" class="side-link">Inventory</a>
-			<a routerLink="/my-assets" routerLinkActive="active" class="side-link">My Assets</a>
-			<a *ngIf="isAdminOrManager()" routerLink="/reports" routerLinkActive="active" class="side-link">Reports</a>
-			<a *ngIf="isAdmin()" routerLink="/user-administration" routerLinkActive="active" class="side-link">
-				User Admin
-				<span *ngIf="pendingApprovalsCount > 0" class="pending-pill">{{ pendingApprovalsCount }}</span>
+		<nav class="flex flex-col gap-2 flex-1">
+			<a routerLink="/inventory" routerLinkActive="active" class="group flex items-center justify-between gap-3 text-slate-600 font-medium text-sm px-4 py-3 rounded-xl border border-transparent hover:bg-slate-50 hover:text-indigo-700 hover:translate-x-1 transition-all duration-300">
+				<span>Inventory</span>
 			</a>
-			<a *ngIf="isAdmin()" routerLink="/audit-log" routerLinkActive="active" class="side-link">Audit</a>
+			<a routerLink="/my-assets" routerLinkActive="active" class="group flex items-center justify-between gap-3 text-slate-600 font-medium text-sm px-4 py-3 rounded-xl border border-transparent hover:bg-slate-50 hover:text-indigo-700 hover:translate-x-1 transition-all duration-300">
+				<span>My Assets</span>
+			</a>
+			<a *ngIf="isAdminOrManager()" routerLink="/reports" routerLinkActive="active" class="group flex items-center justify-between gap-3 text-slate-600 font-medium text-sm px-4 py-3 rounded-xl border border-transparent hover:bg-slate-50 hover:text-indigo-700 hover:translate-x-1 transition-all duration-300">
+				<span>Reports</span>
+			</a>
+			<a *ngIf="isAdmin()" routerLink="/user-administration" routerLinkActive="active" class="group flex items-center justify-between gap-3 text-slate-600 font-medium text-sm px-4 py-3 rounded-xl border border-transparent hover:bg-slate-50 hover:text-indigo-700 hover:translate-x-1 transition-all duration-300">
+				<span>User Admin</span>
+				<span *ngIf="pendingApprovalsCount > 0" class="min-w-6 h-6 px-1.5 inline-grid place-items-center rounded-full text-[11px] font-bold text-amber-700 bg-amber-100">{{ pendingApprovalsCount }}</span>
+			</a>
+			<a *ngIf="isAdmin()" routerLink="/audit-log" routerLinkActive="active" class="group flex items-center justify-between gap-3 text-slate-600 font-medium text-sm px-4 py-3 rounded-xl border border-transparent hover:bg-slate-50 hover:text-indigo-700 hover:translate-x-1 transition-all duration-300">
+				<span>Audit</span>
+			</a>
 		</nav>
 
-		<div class="side-footer">
-			<div class="role-chip">{{ getUserRole() }}</div>
-			<a routerLink="/login" (click)="logout()" class="logout-link">Sign out</a>
+		<div class="mt-auto flex flex-col gap-4 pt-6 border-t border-slate-100">
+			<div class="inline-flex items-center justify-center py-2 px-4 rounded-xl text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100/50">{{ getUserRole() }}</div>
+			<a routerLink="/login" (click)="logout()" class="text-sm font-semibold text-slate-600 border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 py-2.5 rounded-xl text-center shadow-sm transition-all duration-300 cursor-pointer">Sign out</a>
 		</div>
 	</aside>
 
-	<main class="app-main">
+	<main class="p-8 overflow-y-auto custom-scrollbar relative">
 		<router-outlet></router-outlet>
 	</main>
 </div>

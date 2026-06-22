@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationDialogComponent } from '../../components/confirmation-dialog/confirmation-dialog';
 import { UserDetails, UserService, UserSummary } from '../../services/user';
@@ -19,10 +19,45 @@ export class UserAdministrationComponent implements OnInit {
   actionMessage = '';
   actionMessageType: 'success' | 'error' = 'success';
   errorMessage = '';
+  expandedUserId: number | null = null;
+
+  toggleExpand(id: number, event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (target.closest('.btn-action-trigger') || target.closest('.action-dropdown-menu') || target.closest('select') || target.closest('button') || target.closest('input')) {
+      return;
+    }
+    const user = this.users.find(u => u.userID === id);
+    if (!user || user.accountStatus !== 'Active') {
+      return;
+    }
+    if (this.expandedUserId === id) {
+      this.expandedUserId = null;
+    } else {
+      this.expandedUserId = id;
+      this.openUser(id);
+    }
+  }
+  
+  openDropdownId: number | null = null;
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    this.openDropdownId = null;
+  }
+
+  toggleDropdown(id: number, event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.openDropdownId === id) {
+      this.openDropdownId = null;
+    } else {
+      this.openDropdownId = id;
+    }
+  }
 
   confirmationModalOpen = false;
   confirmationTitle = '';
   confirmationMessage = '';
+  confirmationCancelLabel = 'Cancel';
   confirmationAction: (() => void) | null = null;
 
   // Inline rejection modal state
@@ -79,6 +114,16 @@ export class UserAdministrationComponent implements OnInit {
     });
   }
 
+  viewCheckouts(userId: number): void {
+    const user = this.users.find(u => u.userID === userId);
+    if (!user || user.accountStatus !== 'Active') {
+      return;
+    }
+    this.expandedUserId = userId;
+    this.openDropdownId = null;
+    this.openUser(userId);
+  }
+
   private showActionMessage(msg: string, type: 'success' | 'error' = 'success'): void {
     this.actionMessageType = type;
     this.actionMessage = msg;
@@ -89,10 +134,11 @@ export class UserAdministrationComponent implements OnInit {
     }, 4000);
   }
 
-  private openConfirmation(title: string, message: string, action: () => void): void {
+  private openConfirmation(title: string, message: string, action: () => void, cancelLabel = 'Cancel'): void {
     this.confirmationTitle = title;
     this.confirmationMessage = message;
     this.confirmationAction = action;
+    this.confirmationCancelLabel = cancelLabel;
     this.confirmationModalOpen = true;
     this.cdr.markForCheck();
   }
@@ -103,6 +149,7 @@ export class UserAdministrationComponent implements OnInit {
     this.confirmationAction = null;
     this.confirmationTitle = '';
     this.confirmationMessage = '';
+    this.confirmationCancelLabel = 'Cancel';
     this.cdr.markForCheck();
 
     if (action) {
@@ -115,6 +162,7 @@ export class UserAdministrationComponent implements OnInit {
     this.confirmationAction = null;
     this.confirmationTitle = '';
     this.confirmationMessage = '';
+    this.confirmationCancelLabel = 'Cancel';
     this.cdr.markForCheck();
   }
 
@@ -183,11 +231,41 @@ export class UserAdministrationComponent implements OnInit {
 
   toggleActivation(user: UserSummary): void {
     const activate = user.accountStatus !== 'Active';
-    this.openConfirmation(
-      activate ? 'Activate User' : 'Deactivate User',
-      `${activate ? 'Activate' : 'Deactivate'} ${user.fullName} (${user.email})? Click OK to proceed.`,
-      () => this.executeToggleActivation(user)
-    );
+    if (!activate) {
+      this.busyUserId = user.userID;
+      this.cdr.markForCheck();
+      this.userService.getUserById(user.userID).subscribe({
+        next: (details) => {
+          this.busyUserId = null;
+          this.cdr.markForCheck();
+          if (details.currentCheckouts && details.currentCheckouts.length > 0) {
+            this.openConfirmation(
+              'Deactivation Blocked',
+              `User still has outstanding checkouts. You cannot deactivate a user who is currently holding company assets.`,
+              () => {},
+              ''
+            );
+          } else {
+            this.openConfirmation(
+              'Deactivate User',
+              `Deactivate ${user.fullName} (${user.email})? Click OK to proceed.`,
+              () => this.executeToggleActivation(user)
+            );
+          }
+        },
+        error: (err) => {
+          this.busyUserId = null;
+          this.cdr.markForCheck();
+          this.showActionMessage(err?.error?.message || 'Failed to check user checkouts.', 'error');
+        }
+      });
+    } else {
+      this.openConfirmation(
+        'Activate User',
+        `Activate ${user.fullName} (${user.email})? Click OK to proceed.`,
+        () => this.executeToggleActivation(user)
+      );
+    }
   }
 
   private executeToggleActivation(user: UserSummary): void {
