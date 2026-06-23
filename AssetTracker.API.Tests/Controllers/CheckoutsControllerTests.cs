@@ -210,6 +210,120 @@ namespace AssetTracker.API.Tests.Controllers
             context.AuditTrails.Any(a => a.Action == "EMAIL_REMINDER").Should().BeFalse();
         }
 
+        // §2.2 Transaction Validation - reject cases
+
+        [Fact]
+        public async Task AssignAsset_WithDecommissionedAsset_ReturnsBadRequest()
+        {
+            // Arrange - asset 1 has been decommissioned
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var asset = context.Assets.Find(1);
+            asset!.Status = "Decommissioned";
+            context.SaveChanges();
+            var controller = new CheckoutsController(context, _mockEmailService.Object, _mockConfiguration.Object);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+            var dto = new CheckoutDto
+            {
+                AssetID = 1,
+                EmployeeEmail = "user@test.com",
+                ExpectedReturnDate = DateTime.UtcNow.AddDays(7)
+            };
+
+            // Act
+            var result = await controller.AssignAsset(dto);
+
+            // Assert
+            var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+            var payload = JsonSerializer.SerializeToElement(badRequest.Value);
+            payload.GetProperty("message").GetString().Should().Contain("decommissioned");
+            context.Checkouts.Any(c => c.AssetID == 1).Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task AssignAsset_WithPastReturnDate_ReturnsBadRequest()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new CheckoutsController(context, _mockEmailService.Object, _mockConfiguration.Object);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+            var dto = new CheckoutDto
+            {
+                AssetID = 1,
+                EmployeeEmail = "user@test.com",
+                ExpectedReturnDate = DateTime.UtcNow.AddDays(-1) // In the past
+            };
+
+            // Act
+            var result = await controller.AssignAsset(dto);
+
+            // Assert - rejected, and no checkout persisted
+            var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+            var payload = JsonSerializer.SerializeToElement(badRequest.Value);
+            payload.GetProperty("message").GetString().Should().Contain("past");
+            context.Checkouts.Any(c => c.AssetID == 1).Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task AssignAsset_WithMissingReturnDate_ReturnsBadRequest()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new CheckoutsController(context, _mockEmailService.Object, _mockConfiguration.Object);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+            var dto = new CheckoutDto
+            {
+                AssetID = 1,
+                EmployeeEmail = "user@test.com",
+                ExpectedReturnDate = null // Missing
+            };
+
+            // Act
+            var result = await controller.AssignAsset(dto);
+
+            // Assert
+            var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+            var payload = JsonSerializer.SerializeToElement(badRequest.Value);
+            payload.GetProperty("message").GetString().Should().Contain("required");
+            context.Checkouts.Any(c => c.AssetID == 1).Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task AssignAsset_WhenUserAlreadyHasSameAsset_ReturnsBadRequest()
+        {
+            // Arrange - user 2 already holds an ACTIVE checkout for asset 1.
+            // The asset is deliberately left "Available" so the request reaches the
+            // duplicate-checkout guard (VALIDATION 7) rather than the status guard (VALIDATION 3).
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            context.Checkouts.Add(new Checkout
+            {
+                AssetID = 1,
+                UserID = 2,
+                UserFullName = "Test User",
+                UserEmail = "user@test.com",
+                CheckoutTimestamp = DateTime.UtcNow,
+                ExpectedReturnDate = DateTime.UtcNow.AddDays(7),
+                Status = "Active"
+            });
+            context.SaveChanges();
+
+            var controller = new CheckoutsController(context, _mockEmailService.Object, _mockConfiguration.Object);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+            var dto = new CheckoutDto
+            {
+                AssetID = 1,
+                EmployeeEmail = "user@test.com",
+                ExpectedReturnDate = DateTime.UtcNow.AddDays(7)
+            };
+
+            // Act
+            var result = await controller.AssignAsset(dto);
+
+            // Assert - rejected specifically by the duplicate guard
+            var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+            var payload = JsonSerializer.SerializeToElement(badRequest.Value);
+            payload.GetProperty("message").GetString().Should().Contain("already has this asset");
+        }
+
         #endregion
 
         #region ReturnAsset Tests
@@ -355,6 +469,115 @@ namespace AssetTracker.API.Tests.Controllers
             updatedCheckout!.ActualReturnDate.Should().NotBeNull();
             updatedCheckout.ActualReturnDate.Should().BeOnOrAfter(beforeReturn);
             updatedCheckout.ActualReturnDate.Should().BeOnOrBefore(afterReturn);
+        }
+
+        #endregion
+
+        #region CancelCheckout Tests
+
+        private static Checkout SeedActiveCheckout(Data.ApplicationDbContext context)
+        {
+            var asset = context.Assets.Find(1);
+            asset!.Status = "Checked Out";
+            asset.AssignedTo = "Test User";
+            var checkout = new Checkout
+            {
+                AssetID = 1,
+                UserID = 2,
+                UserFullName = "Test User",
+                UserEmail = "user@test.com",
+                CheckoutTimestamp = DateTime.UtcNow,
+                ExpectedReturnDate = DateTime.UtcNow.AddDays(7),
+                Status = "Active"
+            };
+            context.Checkouts.Add(checkout);
+            context.SaveChanges();
+            return checkout;
+        }
+
+        [Fact]
+        public async Task CancelCheckout_WithActiveCheckout_ReturnsOk()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            SeedActiveCheckout(context);
+            var controller = new CheckoutsController(context, _mockEmailService.Object, _mockConfiguration.Object);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+
+            // Act
+            var result = await controller.CancelCheckout(1);
+
+            // Assert
+            result.Should().BeOfType<OkObjectResult>();
+        }
+
+        [Fact]
+        public async Task CancelCheckout_UpdatesAssetStatusToAvailable()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            SeedActiveCheckout(context);
+            var controller = new CheckoutsController(context, _mockEmailService.Object, _mockConfiguration.Object);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+
+            // Act
+            await controller.CancelCheckout(1);
+
+            // Assert
+            var updatedAsset = context.Assets.Find(1);
+            updatedAsset!.Status.Should().Be("Available");
+            updatedAsset.AssignedTo.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task CancelCheckout_UpdatesCheckoutStatusToCancelled()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var checkout = SeedActiveCheckout(context);
+            var controller = new CheckoutsController(context, _mockEmailService.Object, _mockConfiguration.Object);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+
+            // Act
+            await controller.CancelCheckout(1);
+
+            // Assert
+            var updatedCheckout = context.Checkouts.Find(checkout.CheckoutID);
+            updatedCheckout!.Status.Should().Be("Cancelled");
+            updatedCheckout.ActualReturnDate.Should().NotBeNull();
+        }
+
+        [Fact]
+        public async Task CancelCheckout_WritesAuditTrail()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            SeedActiveCheckout(context);
+            var controller = new CheckoutsController(context, _mockEmailService.Object, _mockConfiguration.Object);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+
+            // Act
+            await controller.CancelCheckout(1);
+
+            // Assert
+            var audit = context.AuditTrails.FirstOrDefault(a => a.Action == "CANCEL_CHECKOUT" && a.AssetID == 1);
+            audit.Should().NotBeNull();
+            audit!.PerformedByEmail.Should().Be("admin@test.com");
+        }
+
+        [Fact]
+        public async Task CancelCheckout_WithNoActiveCheckout_ReturnsNotFound()
+        {
+            // Arrange - asset 1 has no active checkout in seed data
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new CheckoutsController(context, _mockEmailService.Object, _mockConfiguration.Object);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+
+            // Act
+            var result = await controller.CancelCheckout(1);
+
+            // Assert
+            result.Should().BeOfType<NotFoundObjectResult>();
         }
 
         #endregion

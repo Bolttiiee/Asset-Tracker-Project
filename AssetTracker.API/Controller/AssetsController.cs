@@ -61,6 +61,10 @@ namespace AssetTracker.API.Controller
                 });
             }
 
+            // System-set the creation timestamp; a newly provisioned asset is never decommissioned.
+            asset.DateAdded = DateTime.UtcNow;
+            asset.DecommissionDate = null;
+
             _context.Assets.Add(asset);
             await _context.SaveChangesAsync(); // Saves asset first to generate AssetID
 
@@ -124,6 +128,10 @@ namespace AssetTracker.API.Controller
                 }
             }
 
+            // Preserve system-managed fields so an edit payload cannot overwrite them.
+            asset.DateAdded = existingAsset.DateAdded;
+            asset.DecommissionDate = existingAsset.DecommissionDate;
+
             _context.Entry(asset).State = EntityState.Modified;
 
             try
@@ -179,6 +187,7 @@ namespace AssetTracker.API.Controller
             var previousStatus = asset.Status;
             asset.Status = "Decommissioned";
             asset.AssignedTo = string.Empty;
+            asset.DecommissionDate = DateTime.UtcNow;
 
             // LOG THE AUDIT TRAIL
             var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? User.Identity?.Name ?? "System Admin";
@@ -302,6 +311,7 @@ namespace AssetTracker.API.Controller
             // Restore asset to available status
             asset.Status = "Available";
             asset.AssignedTo = string.Empty;
+            asset.DecommissionDate = null;
 
             // LOG THE AUDIT TRAIL
             var adminEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? User.Identity?.Name ?? "System Admin";

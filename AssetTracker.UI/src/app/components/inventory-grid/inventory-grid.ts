@@ -298,7 +298,9 @@ export class InventoryGridComponent implements OnInit {
     this.refreshLocalMetrics();
     this.cdr.markForCheck();
 
-    this.assetService.updateAsset(asset.assetID, updatedAsset).subscribe({
+    // Decommission is a soft delete on the backend (DELETE endpoint stamps DecommissionDate).
+    // The PUT/update endpoint explicitly rejects direct status changes.
+    this.assetService.deleteAsset(asset.assetID).subscribe({
       next: () => {
         this.busyAssetId = null;
         this.showToast('Asset decommissioned successfully.', 'success');
@@ -338,6 +340,37 @@ export class InventoryGridComponent implements OnInit {
       error: (err) => {
         this.busyAssetId = null;
         this.showToast(err?.error?.message || 'Force return failed.', 'error');
+      }
+    });
+  }
+
+  cancelCheckout(asset: Asset): void {
+    const assignedUser = asset.assignedTo ? ` (currently assigned to ${asset.assignedTo})` : '';
+    this.openConfirmation(
+      'Cancel Checkout',
+      `Cancel the active checkout for "${asset.name}"${assignedUser}? This voids the checkout and returns the asset to Available. Click OK to proceed.`,
+      () => this.executeCancelCheckout(asset)
+    );
+  }
+
+  private executeCancelCheckout(asset: Asset): void {
+    this.busyAssetId = asset.assetID;
+    this.assetService.cancelCheckout(asset.assetID).subscribe({
+      next: (res) => {
+        this.busyAssetId = null;
+        this.assets = this.assets.map((currentAsset) =>
+          currentAsset.assetID === asset.assetID
+            ? { ...currentAsset, status: 'Available', assignedTo: '' }
+            : currentAsset
+        );
+        this.refreshLocalMetrics();
+        this.cdr.markForCheck();
+        this.showToast(res?.message || 'Checkout cancelled. Asset returned to Available.', 'success');
+        this.loadInventory();
+      },
+      error: (err) => {
+        this.busyAssetId = null;
+        this.showToast(err?.error?.message || 'Cancel checkout failed.', 'error');
       }
     });
   }

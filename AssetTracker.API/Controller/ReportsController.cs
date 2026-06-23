@@ -38,7 +38,6 @@ namespace AssetTracker.API.Controller
         {
             var query = _context.Checkouts
                 .Include(c => c.Asset)
-                .Include(c => c.User)
                 .AsQueryable();
 
             // Filter by date range
@@ -100,7 +99,6 @@ namespace AssetTracker.API.Controller
         {
             var query = _context.Checkouts
                 .Include(c => c.Asset)
-                .Include(c => c.User)
                 .AsQueryable();
 
             // Apply same filters
@@ -182,7 +180,6 @@ namespace AssetTracker.API.Controller
         {
             var query = _context.Checkouts
                 .Include(c => c.Asset)
-                .Include(c => c.User)
                 .AsQueryable();
 
             // Apply same filters

@@ -5,6 +5,7 @@ using AssetTracker.API.Data;
 using AssetTracker.API.Models;
 using AssetTracker.API.Services;
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -25,6 +26,19 @@ namespace AssetTracker.API.Controller
             _context = context;
             _emailService = emailService;
             _configuration = configuration;
+        }
+
+        // Number of reminder emails sent concurrently. Each send opens its own SMTP connection,
+        // so bounded parallelism is safe. Configurable via "Email:MaxParallelSends" (default 4;
+        // set to 1 for sequential sending).
+        private int GetMaxParallelSends()
+        {
+            if (int.TryParse(_configuration["Email:MaxParallelSends"], out var configured) && configured > 0)
+            {
+                return configured;
+            }
+
+            return 4;
         }
 
         // POST: api/checkouts/assign
@@ -210,23 +224,20 @@ namespace AssetTracker.API.Controller
             return Ok(new { message = $"Asset '{asset.Name}' has been successfully returned to inventory." });
         }
 
-        // POST: api/checkouts/cancel/{checkoutId}
-        [HttpPost("cancel/{checkoutId}")]
+        // POST: api/checkouts/cancel/{assetId}
+        // Cancels (voids) the active checkout for an asset and returns it to Available.
+        // Keyed by assetId to match the return/force-return endpoints used by the asset management page.
+        [HttpPost("cancel/{assetId}")]
         [Authorize(Roles = "Admin,Asset Manager")]
-        public async Task<IActionResult> CancelCheckout(int checkoutId)
+        public async Task<IActionResult> CancelCheckout(int assetId)
         {
             var checkout = await _context.Checkouts
                 .Include(c => c.Asset)
-                .FirstOrDefaultAsync(c => c.CheckoutID == checkoutId);
+                .FirstOrDefaultAsync(c => c.AssetID == assetId && c.Status == "Active");
 
             if (checkout == null)
             {
-                return NotFound(new { message = "Checkout record not found." });
-            }
-
-            if (checkout.Status != "Active")
-            {
-                return BadRequest(new { message = "Only active checkouts can be cancelled." });
+                return NotFound(new { message = "No active checkout found for this asset." });
             }
 
             // Restore asset to available status
@@ -425,30 +436,43 @@ namespace AssetTracker.API.Controller
             var reminderEmailsFailed = 0;
             var adminDigestSent = false;
 
-            foreach (var checkout in overdueCheckouts)
-            {
-                try
+            // Pass 1: send reminders with bounded parallelism. Each send opens its own SMTP
+            // connection, so concurrent sends are safe. No DbContext work happens here because
+            // DbContext is not thread-safe.
+            var sentCheckouts = new ConcurrentBag<Checkout>();
+            await Parallel.ForEachAsync(
+                overdueCheckouts,
+                new ParallelOptions { MaxDegreeOfParallelism = GetMaxParallelSends() },
+                async (checkout, ct) =>
                 {
-                    await _emailService.SendOverdueReminderAsync(checkout);
-
-                    var auditLog = new AuditTrail
+                    try
                     {
-                        Action = "EMAIL_REMINDER",
-                        AssetID = checkout.AssetID,
-                        AssetName = checkout.Asset?.Name ?? "Unknown",
-                        PerformedByEmail = "system@manual-trigger",
-                        Timestamp = DateTime.UtcNow,
-                        Details = $"Manual overdue reminder email sent to {checkout.UserFullName} ({checkout.UserEmail}). Days overdue: {(today - checkout.ExpectedReturnDate.Date).Days}"
-                    };
-                    _context.AuditTrails.Add(auditLog);
+                        await _emailService.SendOverdueReminderAsync(checkout);
+                        sentCheckouts.Add(checkout);
+                    }
+                    catch
+                    {
+                        // Failures are tallied from the sent count after the parallel pass.
+                    }
+                });
 
-                    reminderEmailsSent++;
-                }
-                catch
+            // Pass 2: write audit rows sequentially against the single, non-thread-safe DbContext.
+            foreach (var checkout in sentCheckouts)
+            {
+                var auditLog = new AuditTrail
                 {
-                    reminderEmailsFailed++;
-                }
+                    Action = "EMAIL_REMINDER",
+                    AssetID = checkout.AssetID,
+                    AssetName = checkout.Asset?.Name ?? "Unknown",
+                    PerformedByEmail = "system@manual-trigger",
+                    Timestamp = DateTime.UtcNow,
+                    Details = $"Manual overdue reminder email sent to {checkout.UserFullName} ({checkout.UserEmail}). Days overdue: {(today - checkout.ExpectedReturnDate.Date).Days}"
+                };
+                _context.AuditTrails.Add(auditLog);
             }
+
+            reminderEmailsSent = sentCheckouts.Count;
+            reminderEmailsFailed = overdueCheckouts.Count - sentCheckouts.Count;
 
             try
             {

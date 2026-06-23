@@ -192,6 +192,53 @@ namespace AssetTracker.API.Tests.Models
 
         #endregion
 
+        #region Checkout EffectiveStatus Tests
+
+        [Fact]
+        public void Checkout_ActiveNotPastDue_EffectiveStatusIsActive()
+        {
+            // Arrange
+            var checkout = new Checkout
+            {
+                Status = "Active",
+                ExpectedReturnDate = DateTime.UtcNow.Date.AddDays(5)
+            };
+
+            // Act & Assert
+            checkout.EffectiveStatus.Should().Be("Active");
+        }
+
+        [Fact]
+        public void Checkout_ActivePastDue_EffectiveStatusIsOverdue()
+        {
+            // Arrange - active checkout whose expected return date has passed
+            var checkout = new Checkout
+            {
+                Status = "Active",
+                ExpectedReturnDate = DateTime.UtcNow.Date.AddDays(-1)
+            };
+
+            // Act & Assert - derives the brief's "Overdue" state without mutating stored Status
+            checkout.EffectiveStatus.Should().Be("Overdue");
+        }
+
+        [Fact]
+        public void Checkout_Returned_EffectiveStatusIsReturnedEvenIfPastDue()
+        {
+            // Arrange - a returned checkout is never "Overdue", even if returned late
+            var checkout = new Checkout
+            {
+                Status = "Returned",
+                ExpectedReturnDate = DateTime.UtcNow.Date.AddDays(-10),
+                ActualReturnDate = DateTime.UtcNow.Date.AddDays(-2)
+            };
+
+            // Act & Assert
+            checkout.EffectiveStatus.Should().Be("Returned");
+        }
+
+        #endregion
+
         #region ForgotPasswordDto Tests
 
         [Fact]

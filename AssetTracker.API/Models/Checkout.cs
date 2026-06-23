@@ -35,6 +35,20 @@ namespace AssetTracker.API.Models
         [StringLength(50)]
         public string Status { get; set; } = "Active"; // Active, Returned, Overdue 
 
+        /// <summary>
+        /// Three-state status described by the data model (Active, Returned, Overdue).
+        /// Not persisted: the stored <see cref="Status"/> holds the lifecycle state
+        /// (Active/Returned) that internal queries filter on, while this derives "Overdue"
+        /// for any active checkout past its expected return date. Flipping the persisted
+        /// Status to "Overdue" would break return, duplicate-checkout and my-assets queries
+        /// that filter on Status == "Active", so overdue is computed instead.
+        /// </summary>
+        [NotMapped]
+        public string EffectiveStatus =>
+            Status == "Active" && ExpectedReturnDate.Date < DateTime.UtcNow.Date
+                ? "Overdue"
+                : Status;
+
         [ForeignKey("AssetID")]
         public Asset? Asset { get; set; }
 

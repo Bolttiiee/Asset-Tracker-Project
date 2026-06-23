@@ -7,6 +7,7 @@ export interface Asset {
   status: 'Available' | 'Checked Out' | 'Under Maintenance' | 'Decommissioned';
   assignedTo: string;
   purchaseDate: string | Date;
+  dateAdded?: string | Date;
   decommissionDate?: string | null;
   value: number;
   notes?: string;

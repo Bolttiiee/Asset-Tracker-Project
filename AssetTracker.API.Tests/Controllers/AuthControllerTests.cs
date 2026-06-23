@@ -842,3 +842,6 @@ namespace AssetTracker.API.Tests.Controllers
     }
 }
 
+// NOTE: Application-level guard. Adequate for internal single-digit concurrency.
+// If this ever runs at scale, add a unique filtered index on Checkouts(AssetID) WHERE Status='Active'.
+

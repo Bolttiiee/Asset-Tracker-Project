@@ -28,6 +28,20 @@ namespace AssetTracker.API.Data
             modelBuilder.Entity<Asset>()
                 .Property(a => a.Value)
                 .HasPrecision(18, 2);
+
+            // Database-generated creation timestamp; also backfills existing rows on migration.
+            modelBuilder.Entity<Asset>()
+                .Property(a => a.DateAdded)
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            // Enforce unique constraints at the database level (brief 3.1 & 3.2)
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<Asset>()
+                .HasIndex(a => a.SerialNumber)
+                .IsUnique();
         }
     }
 }

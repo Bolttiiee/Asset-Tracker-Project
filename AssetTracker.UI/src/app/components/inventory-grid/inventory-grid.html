@@ -174,6 +174,9 @@
                     <button class="dropdown-item" *ngIf="asset.status === 'Checked Out'" (click)="forceReturnAsset(asset)">
                       Force Return
                     </button>
+                    <button class="dropdown-item danger-item" *ngIf="asset.status === 'Checked Out'" (click)="cancelCheckout(asset)">
+                      Cancel Checkout
+                    </button>
                     <button class="dropdown-item" *ngIf="asset.status === 'Available'" (click)="toggleMaintenance(asset, true)">
                       Maintenance
                     </button>
@@ -210,6 +213,14 @@
                     <div class="flex flex-col">
                       <span class="text-xs font-semibold text-slate-400 tracking-wide">Category</span>
                       <span class="text-sm font-semibold text-slate-800 mt-1">{{ asset.category }}</span>
+                    </div>
+                    <div class="flex flex-col" *ngIf="asset.dateAdded">
+                      <span class="text-xs font-semibold text-slate-400 tracking-wide">Date Added</span>
+                      <span class="text-sm font-semibold text-slate-800 mt-1">{{ asset.dateAdded | date:'mediumDate' }}</span>
+                    </div>
+                    <div class="flex flex-col" *ngIf="asset.status === 'Decommissioned' && asset.decommissionDate">
+                      <span class="text-xs font-semibold text-slate-400 tracking-wide">Decommissioned On</span>
+                      <span class="text-sm font-semibold text-slate-800 mt-1">{{ asset.decommissionDate | date:'mediumDate' }}</span>
                     </div>
                     <div class="flex flex-col col-span-2" *ngIf="asset.assignedTo">
                       <span class="text-xs font-semibold text-slate-400 tracking-wide">Assignment Details</span>

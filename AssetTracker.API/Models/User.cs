@@ -33,7 +33,7 @@ namespace AssetTracker.API.Models
 
         [Required]
         [StringLength(50)]
-        public string Role { get; set; } = "Standard User"; // Standard User, Asset Manager, Administrator
+        public string Role { get; set; } = "Standard User"; // Standard User, Asset Manager, Admin
 
         [Required]
         [StringLength(50)]

@@ -146,6 +146,10 @@ namespace AssetTracker.API.Controllers
                 return Unauthorized(new { message = "Invalid email address or password." });
             }
 
+            // 3b. Record the successful login timestamp (brief 3.1: last login date and timestamp).
+            user.LastLoginDate = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
             // 4. GENERATE SIGNED JWT AUTHENTICATION TOKEN BADGE
             var jwtSettings = _configuration.GetSection("Jwt");
             var secretKey = Encoding.UTF8.GetBytes(jwtSettings["Secret"]!);

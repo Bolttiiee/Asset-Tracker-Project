@@ -78,6 +78,11 @@ export class AssetService {
     return this.http.post(`${this.apiUrl}/${assetId}/admin-return`, {}, { headers: this.getAuthHeaders() });
   }
 
+  // Cancel (void) the active checkout for an asset, returning it to Available.
+  cancelCheckout(assetId: number): Observable<any> {
+    return this.http.post(`${this.apiUrl.replace('/assets', '/checkouts')}/cancel/${assetId}`, {}, { headers: this.getAuthHeaders() });
+  }
+
   restoreAsset(assetId: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/${assetId}/restore`, {}, { headers: this.getAuthHeaders() });
   }

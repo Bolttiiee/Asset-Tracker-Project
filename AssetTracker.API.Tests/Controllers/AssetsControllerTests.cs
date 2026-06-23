@@ -184,6 +184,28 @@ namespace AssetTracker.API.Tests.Controllers
         }
 
         [Fact]
+        public async Task DeleteAsset_WithValidId_StampsDecommissionDate()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new AssetsController(context);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+            // Asset 1 is seeded as "Available" with no decommission date.
+            var asset = context.Assets.First(a => a.Status == "Available");
+            asset.DecommissionDate.Should().BeNull();
+            var before = DateTime.UtcNow;
+
+            // Act
+            await controller.DeleteAsset(asset.AssetID);
+
+            // Assert - decommissioning must stamp the DecommissionDate (brief 3.2)
+            var decommissionedAsset = context.Assets.Find(asset.AssetID);
+            decommissionedAsset!.DecommissionDate.Should().NotBeNull();
+            decommissionedAsset.DecommissionDate.Should().BeOnOrAfter(before);
+            decommissionedAsset.DecommissionDate.Should().BeOnOrBefore(DateTime.UtcNow);
+        }
+
+        [Fact]
         public async Task DeleteAsset_WithNonExistentId_ReturnsNotFound()
         {
             // Arrange
@@ -192,6 +214,64 @@ namespace AssetTracker.API.Tests.Controllers
 
             // Act
             var result = await controller.DeleteAsset(999);
+
+            // Assert
+            result.Should().BeOfType<NotFoundObjectResult>();
+        }
+
+        #endregion
+
+        #region RestoreDecommissionedAsset Tests
+
+        [Fact]
+        public async Task RestoreDecommissionedAsset_WithDecommissionedAsset_ClearsDecommissionDate()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new AssetsController(context);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+            // Put a seeded asset into the decommissioned state, as the DELETE endpoint would.
+            var asset = context.Assets.First(a => a.Status == "Available");
+            asset.Status = "Decommissioned";
+            asset.DecommissionDate = DateTime.UtcNow.AddDays(-2);
+            context.SaveChanges();
+
+            // Act
+            await controller.RestoreDecommissionedAsset(asset.AssetID);
+
+            // Assert - restoring must clear the DecommissionDate and reset status (brief 3.2)
+            var restoredAsset = context.Assets.Find(asset.AssetID);
+            restoredAsset!.Status.Should().Be("Available");
+            restoredAsset.DecommissionDate.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task RestoreDecommissionedAsset_WithNonDecommissionedAsset_ReturnsBadRequest()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new AssetsController(context);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+            // Asset 1 is seeded as "Available" - not decommissioned.
+            var asset = context.Assets.First(a => a.Status == "Available");
+
+            // Act
+            var result = await controller.RestoreDecommissionedAsset(asset.AssetID);
+
+            // Assert
+            result.Should().BeOfType<BadRequestObjectResult>();
+        }
+
+        [Fact]
+        public async Task RestoreDecommissionedAsset_WithNonExistentId_ReturnsNotFound()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new AssetsController(context);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+
+            // Act
+            var result = await controller.RestoreDecommissionedAsset(999);
 
             // Assert
             result.Should().BeOfType<NotFoundObjectResult>();

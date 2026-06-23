@@ -39,10 +39,26 @@ namespace AssetTracker.API.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("Condition")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("DateAdded")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<DateTime?>("DecommissionDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("PurchaseDate")
                         .HasColumnType("datetime2");
@@ -62,6 +78,9 @@ namespace AssetTracker.API.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("AssetID");
+
+                    b.HasIndex("SerialNumber")
+                        .IsUnique();
 
                     b.ToTable("Assets", (string)null);
                 });
@@ -219,6 +238,9 @@ namespace AssetTracker.API.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("UserID");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.ToTable("Users", (string)null);
                 });
