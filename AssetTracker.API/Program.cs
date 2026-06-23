@@ -58,7 +58,15 @@ builder.Services.AddCors(options =>
 
 // 2. Register JWT Authentication Services (MOVED HERE)
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var secretKey = Encoding.UTF8.GetBytes(jwtSettings["Secret"]!);
+var jwtSecret = jwtSettings["Secret"];
+if (string.IsNullOrWhiteSpace(jwtSecret))
+{
+    throw new InvalidOperationException(
+        "Jwt:Secret is not configured. Set it via user secrets in development " +
+        "(dotnet user-secrets set \"Jwt:Secret\" \"<key>\" --project AssetTracker.API) " +
+        "or an environment variable (Jwt__Secret) in production.");
+}
+var secretKey = Encoding.UTF8.GetBytes(jwtSecret);
 
 builder.Services.AddAuthentication(options =>
 {
