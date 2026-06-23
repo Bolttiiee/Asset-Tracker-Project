@@ -1,5 +1,9 @@
 # 🚀 Quick Start Guide - Get Running in 5 Minutes
 
+> **Security note:** Store secrets (`Jwt:Secret`, `Email:SmtpPassword`) via .NET User
+> Secrets, not in `appsettings.json`. The snippet below shows the config shape only.
+> See the root `README.md` ("Getting started") for the `dotnet user-secrets` commands.
+
 ## ⚡ Fast Track to Compliance
 
 ### Step 1: Configure Email (2 minutes)

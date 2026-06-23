@@ -1,5 +1,10 @@
 # Email Configuration Quick Start Guide
 
+> **Security note:** Do not commit credentials. The `appsettings.json` examples below
+> show the config *shape* only — store the real `Email:SmtpPassword` (and `Jwt:Secret`)
+> via .NET User Secrets in development or environment variables in production. See the
+> root `README.md` ("Getting started") for the exact commands.
+
 ## Gmail Setup (Most Common)
 
 ### Step 1: Enable 2-Factor Authentication
