@@ -221,6 +221,14 @@ export class InventoryGridComponent implements OnInit {
   runningReminders = false;
 
   runOverdueReminders(): void {
+    this.openConfirmation(
+      'Trigger Overdue Reminders',
+      'Are you sure you want to scan for overdue checkouts and send email reminders to all responsible users?',
+      () => this.executeRunOverdueReminders()
+    );
+  }
+
+  private executeRunOverdueReminders(): void {
     this.runningReminders = true;
     this.cdr.markForCheck();
     this.adminService.runOverdueReminders().subscribe({

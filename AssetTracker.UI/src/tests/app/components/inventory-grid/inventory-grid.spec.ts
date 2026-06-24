@@ -251,4 +251,16 @@ describe('InventoryGridComponent', () => {
       globalThis.setTimeout = originalSetTimeout;
     }
   });
+
+  it('runOverdueReminders opens confirmation and calls service when confirmed', () => {
+    const adminService = TestBed.inject(AdminService) as any;
+    const runSpy = vi.spyOn(adminService, 'runOverdueReminders');
+
+    component.runOverdueReminders();
+    expect(runSpy).not.toHaveBeenCalled();
+    expect(component.confirmationModalOpen).toBe(true);
+
+    component.confirmAction();
+    expect(runSpy).toHaveBeenCalled();
+  });
 });
