@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, HostListener, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { UserService } from './services/user';
@@ -11,6 +11,7 @@ import { UserService } from './services/user';
 })
 export class App implements OnInit {
   protected readonly title = signal('AssetTracker.UI');
+  showUserInfo = false;
 
   isLoggedIn(): boolean {
     return !!(localStorage.getItem('token') || localStorage.getItem('asset_tracker_token'));
@@ -22,6 +23,31 @@ export class App implements OnInit {
     private userService: UserService,
     private router: Router
   ) {}
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.showUserInfo = false;
+  }
+
+  toggleUserInfo(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showUserInfo = !this.showUserInfo;
+  }
+
+  getUserProfile(): { fullName: string; email: string; role: string } | null {
+    const profile = localStorage.getItem('user_profile');
+    if (!profile) return null;
+    try {
+      const parsed = JSON.parse(profile);
+      return {
+        fullName: parsed?.fullName || parsed?.FullName || '',
+        email: parsed?.email || parsed?.Email || '',
+        role: parsed?.role || parsed?.Role || parsed?.userRole || 'Standard User'
+      };
+    } catch {
+      return null;
+    }
+  }
 
   ngOnInit(): void {
     this.loadPendingCount();

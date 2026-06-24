@@ -130,4 +130,42 @@ describe('App', () => {
     expect(localStorage.getItem('userRole')).toBeNull();
     expect(localStorage.getItem('user_profile')).toBeNull();
   });
+
+  it('getUserProfile correctly parses user_profile from localStorage', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+
+    expect(app.getUserProfile()).toBeNull();
+
+    localStorage.setItem('user_profile', JSON.stringify({ fullName: 'Alice Smith', email: 'alice@company.com', role: 'Asset Manager' }));
+    expect(app.getUserProfile()).toEqual({
+      fullName: 'Alice Smith',
+      email: 'alice@company.com',
+      role: 'Asset Manager'
+    });
+  });
+
+  it('toggleUserInfo toggles showUserInfo state', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+
+    expect(app.showUserInfo).toBe(false);
+    
+    const mockEvent = { stopPropagation: vi.fn() } as any;
+    app.toggleUserInfo(mockEvent);
+    expect(app.showUserInfo).toBe(true);
+    expect(mockEvent.stopPropagation).toHaveBeenCalled();
+
+    app.toggleUserInfo(mockEvent);
+    expect(app.showUserInfo).toBe(false);
+  });
+
+  it('onDocumentClick sets showUserInfo to false', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+
+    app.showUserInfo = true;
+    app.onDocumentClick();
+    expect(app.showUserInfo).toBe(false);
+  });
 });
