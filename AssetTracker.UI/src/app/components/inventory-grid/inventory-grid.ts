@@ -313,7 +313,14 @@ export class InventoryGridComponent implements OnInit {
       },
       error: (err) => {
         this.busyAssetId = null;
+        // Revert local state to the original asset
+        this.assets = this.assets.map((currentAsset) =>
+          currentAsset.assetID === asset.assetID ? asset : currentAsset
+        );
+        this.refreshLocalMetrics();
+        this.cdr.markForCheck();
         this.showToast(err?.error?.message || 'Decommission failed. This asset may require backend policy handling.', 'error');
+        this.loadInventory();
       }
     });
   }

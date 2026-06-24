@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AssetService } from '../../../../app/services/asset';
 import { UserService } from '../../../../app/services/user';
 import { AdminService } from '../../../../app/services/admin';
@@ -227,6 +227,25 @@ describe('InventoryGridComponent', () => {
       component.restoreAsset(component.assets[0] as any);
       component.confirmAction();
       expect(restoreCalls).toEqual([1]);
+      expect(component.assets[0].status).toBe('Available');
+    } finally {
+      globalThis.setTimeout = originalSetTimeout;
+    }
+  });
+
+  it('reverts local asset state when decommission fails', () => {
+    const originalSetTimeout = globalThis.setTimeout;
+    (globalThis as any).setTimeout = () => 0;
+    try {
+      const assetService = TestBed.inject(AssetService) as any;
+      assetService.deleteAsset = (assetId: number) => throwError(() => new Error('Decommission failed'));
+
+      (component as any).loadInventory = () => {};
+      component.assets = [{ assetID: 1, name: 'Dell Laptop', serialNumber: 'ABC12345', status: 'Available', assignedTo: 'Jane', value: 1200 } as any];
+
+      component.decommissionAsset(component.assets[0] as any);
+      component.confirmAction();
+      
       expect(component.assets[0].status).toBe('Available');
     } finally {
       globalThis.setTimeout = originalSetTimeout;
