@@ -212,6 +212,9 @@ namespace AssetTracker.API.Migrations
                     b.Property<DateTime?>("LastLoginDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("bit");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

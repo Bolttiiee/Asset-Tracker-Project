@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 
@@ -34,13 +34,25 @@ export class ResetPasswordComponent implements OnInit {
 
     this.resetForm = this.fb.group({
       password: ['', [Validators.required, Validators.minLength(6)]],
-    });
+      confirmPassword: ['', [Validators.required]],
+    }, { validators: this.passwordMatchValidator });
   }
+
+  passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
+    const password = group.get('password')?.value;
+    const confirmPassword = group.get('confirmPassword')?.value;
+    return password === confirmPassword ? null : { passwordMismatch: true };
+  }
+
+  private errorTimeout: any;
 
   submitNewPassword(): void {
     if (this.resetForm.invalid) {
       return;
     }
+
+    if (this.errorTimeout) clearTimeout(this.errorTimeout);
+    this.errorMessage = '';
 
     if (this.forced) {
       this.authService.changePassword(this.resetForm.value.password).subscribe({
@@ -50,6 +62,9 @@ export class ResetPasswordComponent implements OnInit {
         },
         error: (err) => {
           this.errorMessage = err.error?.message || 'Failed to update password.';
+          this.errorTimeout = setTimeout(() => {
+            this.errorMessage = '';
+          }, 4000);
         },
       });
       return;
@@ -64,6 +79,9 @@ export class ResetPasswordComponent implements OnInit {
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Token expired or invalid.';
+        this.errorTimeout = setTimeout(() => {
+          this.errorMessage = '';
+        }, 4000);
       },
     });
   }

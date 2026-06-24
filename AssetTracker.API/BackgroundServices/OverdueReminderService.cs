@@ -11,7 +11,6 @@ namespace AssetTracker.API.BackgroundServices
         private readonly ILogger<OverdueReminderService> _logger;
 
         // Overdue reminders run once per day at 08:00 SAST (South Africa Standard Time, UTC+2, no daylight saving).
-        private static readonly TimeZoneInfo SastTimeZone = ResolveSastTimeZone();
         private static readonly TimeSpan DailyRunTimeSast = new(8, 0, 0);
 
         public OverdueReminderService(
@@ -60,7 +59,7 @@ namespace AssetTracker.API.BackgroundServices
         // Returns the next 08:00 SAST occurrence (strictly after <paramref name="utcNow"/>) as a UTC timestamp.
         internal static DateTime GetNextRunUtc(DateTime utcNow)
         {
-            var nowSast = TimeZoneInfo.ConvertTimeFromUtc(utcNow, SastTimeZone);
+            var nowSast = TimeZoneInfo.ConvertTimeFromUtc(utcNow, SastTimeHelper.SastTimeZone);
             var nextRunSast = nowSast.Date + DailyRunTimeSast;
             if (nowSast >= nextRunSast)
             {
@@ -68,28 +67,7 @@ namespace AssetTracker.API.BackgroundServices
             }
 
             // SAST has no daylight saving, so this conversion is unambiguous year-round.
-            return TimeZoneInfo.ConvertTimeToUtc(nextRunSast, SastTimeZone);
-        }
-
-        // Resolves the South Africa time zone across platforms (Windows ID vs IANA ID on Linux/macOS),
-        // falling back to a fixed UTC+2 zone if the OS database is unavailable.
-        private static TimeZoneInfo ResolveSastTimeZone()
-        {
-            foreach (var id in new[] { "South Africa Standard Time", "Africa/Johannesburg" })
-            {
-                try
-                {
-                    return TimeZoneInfo.FindSystemTimeZoneById(id);
-                }
-                catch (TimeZoneNotFoundException)
-                {
-                }
-                catch (InvalidTimeZoneException)
-                {
-                }
-            }
-
-            return TimeZoneInfo.CreateCustomTimeZone("SAST", TimeSpan.FromHours(2), "South Africa Standard Time", "SAST");
+            return TimeZoneInfo.ConvertTimeToUtc(nextRunSast, SastTimeHelper.SastTimeZone);
         }
     }
 }

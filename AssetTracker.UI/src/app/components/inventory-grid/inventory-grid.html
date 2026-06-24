@@ -12,6 +12,9 @@
               [disabled]="runningReminders">
         {{ runningReminders ? 'Running Sweep...' : 'Trigger Overdue Reminders' }}
       </button>
+      <button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all duration-300" (click)="openHeaderCheckoutDrawer()">
+        Assign Asset
+      </button>
       <button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all duration-300" (click)="openProvisioningModal()">
         Add Asset
       </button>
@@ -19,18 +22,12 @@
   </header>
 
   <!-- Alerts -->
-  <div class="space-y-3" *ngIf="errorMessage || apiConnectionMessage || toastMessage">
+  <div class="space-y-3" *ngIf="errorMessage || apiConnectionMessage">
     <div class="p-4 rounded-xl border border-rose-200 bg-rose-50 text-sm font-semibold text-rose-800 shadow-sm" *ngIf="errorMessage">
       {{ errorMessage }}
     </div>
     <div class="p-4 rounded-xl border border-amber-200 bg-amber-50 text-sm font-semibold text-amber-800 shadow-sm" *ngIf="apiConnectionMessage">
       {{ apiConnectionMessage }}
-    </div>
-    <div class="p-4 rounded-xl border text-sm font-semibold shadow-sm" *ngIf="toastMessage"
-         [class.border-emerald-200]="toastType === 'success'" [class.bg-emerald-50]="toastType === 'success'" [class.text-emerald-800]="toastType === 'success'"
-         [class.border-rose-200]="toastType === 'error'" [class.bg-rose-50]="toastType === 'error'" [class.text-rose-800]="toastType === 'error'"
-         [class.border-blue-200]="toastType === 'info'" [class.bg-blue-50]="toastType === 'info'" [class.text-blue-800]="toastType === 'info'">
-      {{ toastMessage }}
     </div>
   </div>
 
@@ -174,9 +171,7 @@
                     <button class="dropdown-item" *ngIf="asset.status === 'Checked Out'" (click)="forceReturnAsset(asset)">
                       Force Return
                     </button>
-                    <button class="dropdown-item danger-item" *ngIf="asset.status === 'Checked Out'" (click)="cancelCheckout(asset)">
-                      Cancel Checkout
-                    </button>
+
                     <button class="dropdown-item" *ngIf="asset.status === 'Available'" (click)="toggleMaintenance(asset, true)">
                       Maintenance
                     </button>
@@ -255,22 +250,35 @@
 
 <!-- Drawer Provisioning -->
 <app-drawer [isOpen]="checkoutDrawerOpen" title="Assign Asset" (closeDrawer)="closeCheckoutDrawer()">
-  <div *ngIf="checkoutAssetName" class="space-y-5 p-1">
-    <div class="p-4 bg-slate-50 border border-slate-200/80 rounded-xl">
+  <div *ngIf="checkoutDrawerOpen" class="space-y-5 p-1">
+    <!-- Asset Selection (Dropdown if opened from header, otherwise static label) -->
+    <div class="flex flex-col gap-1.5" *ngIf="isHeaderAssign">
+      <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Asset to Assign</label>
+      <div class="relative w-full">
+        <select [(ngModel)]="checkoutAssetId" (ngModelChange)="onHeaderAssetSelected($event)"
+                class="w-full h-11 px-4 border border-slate-300 rounded-xl text-sm bg-white text-slate-900 shadow-sm focus:outline-none focus:border-brand-primary focus:ring-3 focus:ring-brand-primary/15 transition-all cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_14px_center] bg-[size:18px] pr-10">
+          <option [ngValue]="null" disabled>Choose an available asset…</option>
+          <option *ngFor="let asset of availableAssets" [ngValue]="asset.assetID">{{ asset.name }} (Serial: {{ asset.serialNumber }})</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="p-4 bg-slate-50 border border-slate-200/80 rounded-xl" *ngIf="!isHeaderAssign">
       <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Asset to Assign</div>
       <div class="text-base font-extrabold text-slate-900 mt-0.5">{{ checkoutAssetName }}</div>
     </div>
 
     <div class="flex flex-col gap-1.5" *ngIf="isAdminOrManager()">
-      <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Select Employee</label>
-      <input type="text" class="h-10 px-3.5 border border-slate-300 rounded-xl text-sm bg-white text-slate-900 shadow-sm focus:outline-none focus:border-brand-primary focus:ring-3 focus:ring-brand-primary/15 transition-all mb-2" 
-             [(ngModel)]="employeeSearch" placeholder="Type to filter by name, email, or department…" />
-      <select [(ngModel)]="selectedEmployeeId" (ngModelChange)="onEmployeeSelected($event)" size="5"
-              class="border border-slate-300 rounded-xl text-sm bg-white text-slate-900 shadow-sm focus:outline-none focus:border-brand-primary transition-all p-1">
-        <option [ngValue]="null" disabled>Choose an employee…</option>
-        <option *ngFor="let employee of filteredEmployees" [ngValue]="employee.userID">{{ employee.fullName }} — {{ employee.email }}</option>
-      </select>
-      <small *ngIf="filteredEmployees.length === 0" class="text-xs text-rose-500 font-semibold mt-1">No matching employees.</small>
+      <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Choose an Employee</label>
+      <div class="relative w-full">
+        <select [(ngModel)]="selectedEmployeeId" (ngModelChange)="onEmployeeSelected($event)"
+                class="w-full h-11 px-4 border border-slate-300 rounded-xl text-sm bg-white text-slate-900 shadow-sm focus:outline-none focus:border-brand-primary focus:ring-3 focus:ring-brand-primary/15 transition-all cursor-pointer appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_14px_center] bg-[size:18px] pr-10">
+          <option [ngValue]="null" disabled>Choose an employee…</option>
+          <option *ngFor="let employee of employeeOptions" [ngValue]="employee.userID">
+            {{ employee.fullName }} ({{ employee.email }})
+          </option>
+        </select>
+      </div>
     </div>
 
     <div class="flex flex-col gap-1.5">
@@ -311,3 +319,31 @@
 </app-confirmation-dialog>
 
 <app-asset-modal #provisionModal (assetCreated)="loadInventory()"></app-asset-modal>
+
+<!-- Global Floating Toast Notification -->
+<div class="fixed top-6 right-6 z-[9999] max-w-sm w-full p-4 rounded-2xl border text-sm font-semibold shadow-2xl transition-all duration-300 transform scale-100 flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-300"
+     *ngIf="toastMessage"
+     [class.border-emerald-200]="toastType === 'success'" [class.bg-emerald-50]="toastType === 'success'" [class.text-emerald-800]="toastType === 'success'"
+     [class.border-rose-200]="toastType === 'error'" [class.bg-rose-50]="toastType === 'error'" [class.text-rose-800]="toastType === 'error'"
+     [class.border-blue-200]="toastType === 'info'" [class.bg-blue-50]="toastType === 'info'" [class.text-blue-800]="toastType === 'info'">
+  <div class="flex items-center gap-2.5">
+    <!-- Success Icon -->
+    <svg *ngIf="toastType === 'success'" class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+    </svg>
+    <!-- Error Icon -->
+    <svg *ngIf="toastType === 'error'" class="w-5 h-5 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+    <!-- Info Icon -->
+    <svg *ngIf="toastType === 'info'" class="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <span>{{ toastMessage }}</span>
+  </div>
+  <button (click)="toastMessage = ''" class="ml-4 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors p-1 rounded-lg hover:bg-slate-100/50">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+  </button>
+</div>

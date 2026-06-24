@@ -39,15 +39,20 @@ export class InventoryGridComponent implements OnInit {
     }
   }
   checkoutDrawerOpen = false;
+  isHeaderAssign = false;
   checkoutAssetId: number | null = null;
   checkoutAssetName: string = '';
+
+  get availableAssets(): Asset[] {
+    return this.assets.filter(a => a.status === 'Available');
+  }
   checkoutFullName: string = '';
   checkoutEmail: string = '';
   checkoutExpectedReturnDate: string = '';
   employeeOptions: UserSummary[] = [];
   selectedEmployeeId: number | null = null;
   employeeSearch: string = '';
-  today = new Date().toISOString().split('T')[0];
+  today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Africa/Johannesburg', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   metrics: any = null;
   searchTerm: string = '';
   statusFilter: string = '';
@@ -446,6 +451,7 @@ export class InventoryGridComponent implements OnInit {
       return;
     }
 
+    this.isHeaderAssign = false;
     this.checkoutAssetId = asset.assetID;
     this.checkoutAssetName = asset.name;
 
@@ -464,27 +470,56 @@ export class InventoryGridComponent implements OnInit {
     this.checkoutDrawerOpen = true;
   }
 
-  closeCheckoutDrawer(): void {
-    if (this.checkoutDrawerOpen) {
+  closeCheckoutDrawer(isSuccess: boolean = false): void {
+    if (this.checkoutDrawerOpen && !isSuccess) {
       this.showToast('Checkout cancelled. No asset was assigned.', 'info');
     }
     this.checkoutDrawerOpen = false;
+    this.isHeaderAssign = false;
     this.clearCheckoutForm();
+  }
+
+  openHeaderCheckoutDrawer(): void {
+    const available = this.availableAssets;
+    if (available.length === 0) {
+      this.showToast('Assign rejected: no available assets in inventory.', 'error');
+      return;
+    }
+
+    this.isHeaderAssign = true;
+    this.checkoutAssetId = null;
+    this.checkoutAssetName = '';
+    this.clearEmployeeFields();
+    this.checkoutDrawerOpen = true;
+  }
+
+  onHeaderAssetSelected(assetId: number | null): void {
+    const asset = this.assets.find(a => a.assetID === assetId);
+    if (asset) {
+      this.checkoutAssetName = asset.name;
+    } else {
+      this.checkoutAssetName = '';
+    }
   }
 
   clearCheckoutFormWithNotice(): void {
-    this.clearCheckoutForm();
+    this.clearEmployeeFields();
     this.showToast('Checkout form cleared.', 'info');
   }
 
-  clearCheckoutForm(): void {
-    this.checkoutAssetId = null;
-    this.checkoutAssetName = '';
+  clearEmployeeFields(): void {
     this.checkoutFullName = '';
     this.checkoutEmail = '';
     this.selectedEmployeeId = null;
     this.employeeSearch = '';
     this.checkoutExpectedReturnDate = '';
+  }
+
+  clearCheckoutForm(): void {
+    this.checkoutAssetId = null;
+    this.checkoutAssetName = '';
+    this.isHeaderAssign = false;
+    this.clearEmployeeFields();
   }
 
   submitCheckout(): void {
@@ -581,7 +616,7 @@ export class InventoryGridComponent implements OnInit {
         if (res?.message) {
           console.log(res.message);
         }
-        this.closeCheckoutDrawer();
+        this.closeCheckoutDrawer(true);
         this.loadInventory(); // Sync with canonical backend state
       },
       error: (err: any) => {
@@ -622,11 +657,18 @@ export class InventoryGridComponent implements OnInit {
     });
   }
 
+  private toastTimeout: any;
+
   private showToast(message: string, type: 'success' | 'error' | 'info'): void {
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
+    }
     this.toastMessage = message;
     this.toastType = type;
-    setTimeout(() => {
+    this.cdr.markForCheck();
+    this.toastTimeout = setTimeout(() => {
       this.toastMessage = '';
+      this.cdr.markForCheck();
     }, 3000);
   }
 

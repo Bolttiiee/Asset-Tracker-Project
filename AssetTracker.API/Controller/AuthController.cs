@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -180,7 +181,8 @@ namespace AssetTracker.API.Controllers
             {
                 Token = tokenString,
                 Expiration = tokenDescriptor.Expires,
-                User = new { user.FullName, user.Email, user.Role }
+                User = new { user.FullName, user.Email, user.Role, user.MustChangePassword },
+                MustChangePassword = user.MustChangePassword
             });
         }
 
@@ -264,6 +266,47 @@ namespace AssetTracker.API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Your corporate account password has been successfully updated. Proceed to login." });
+        }
+
+        // POST: api/auth/change-password
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdClaim == null) return Unauthorized(new { message = "Invalid token claims." });
+
+            var user = await _context.Users.FindAsync(int.Parse(userIdClaim));
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            // Enforce strict password complexity rules on change-password
+            bool hasUpperCase = dto.NewPassword.Any(char.IsUpper);
+            bool hasNumber = dto.NewPassword.Any(char.IsDigit);
+            bool hasSpecial = dto.NewPassword.Any(ch => !char.IsLetterOrDigit(ch));
+
+            if (dto.NewPassword.Length < 8 || !hasUpperCase || !hasNumber || !hasSpecial)
+            {
+                return BadRequest(new { message = "Password does not meet complexity requirements (8+ characters, 1 uppercase, 1 number, and 1 special character)." });
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            user.MustChangePassword = false; // Reset the flag
+
+            // LOG THE AUDIT TRAIL
+            var auditLog = new AuditTrail
+            {
+                Action = "CHANGE_PASSWORD",
+                AssetID = null,
+                AssetName = $"User: {user.FullName} ({user.Email})",
+                PerformedByEmail = user.Email,
+                Timestamp = DateTime.UtcNow,
+                Details = "Forced password change completed by user."
+            };
+            _context.AuditTrails.Add(auditLog);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Password updated successfully." });
         }
     }
 }

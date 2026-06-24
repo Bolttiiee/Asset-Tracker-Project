@@ -12,14 +12,14 @@ describe('InventoryGridComponent', () => {
   let assignCalls: any[];
   let returnCalls: number[];
   let maintenanceCalls: Array<{ assetId: number; setMaintenance: boolean }>;
-  let updateCalls: any[];
+  let deleteCalls: number[];
   let restoreCalls: number[];
 
   beforeEach(async () => {
     assignCalls = [];
     returnCalls = [];
     maintenanceCalls = [];
-    updateCalls = [];
+    deleteCalls = [];
     restoreCalls = [];
 
     await TestBed.configureTestingModule({
@@ -42,8 +42,8 @@ describe('InventoryGridComponent', () => {
               maintenanceCalls.push({ assetId, setMaintenance });
               return of({ message: 'Updated' });
             },
-            updateAsset: (assetId: number, asset: any) => {
-              updateCalls.push({ assetId, asset });
+            deleteAsset: (assetId: number) => {
+              deleteCalls.push(assetId);
               return of({});
             },
             restoreAsset: (assetId: number) => {
@@ -221,7 +221,7 @@ describe('InventoryGridComponent', () => {
 
       component.decommissionAsset(component.assets[0] as any);
       component.confirmAction();
-      expect(updateCalls.length).toBe(1);
+      expect(deleteCalls).toEqual([1]);
       expect(component.assets[0].status).toBe('Decommissioned');
 
       component.restoreAsset(component.assets[0] as any);

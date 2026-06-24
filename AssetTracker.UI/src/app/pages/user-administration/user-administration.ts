@@ -124,11 +124,16 @@ export class UserAdministrationComponent implements OnInit {
     this.openUser(userId);
   }
 
+  private actionMessageTimeout: any;
+
   private showActionMessage(msg: string, type: 'success' | 'error' = 'success'): void {
+    if (this.actionMessageTimeout) {
+      clearTimeout(this.actionMessageTimeout);
+    }
     this.actionMessageType = type;
     this.actionMessage = msg;
     this.cdr.markForCheck();
-    setTimeout(() => {
+    this.actionMessageTimeout = setTimeout(() => {
       this.actionMessage = '';
       this.cdr.markForCheck();
     }, 4000);

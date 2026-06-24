@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AssetTracker.API.Data;
 using AssetTracker.API.Models;
+using AssetTracker.API.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,10 +18,12 @@ namespace AssetTracker.API.Controller
     public class UsersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public UsersController(ApplicationDbContext context)
+        public UsersController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         // GET: api/users
@@ -98,7 +101,7 @@ namespace AssetTracker.API.Controller
                     serialNumber = c.Asset.SerialNumber,
                     checkoutDate = c.CheckoutTimestamp,
                     expectedReturnDate = c.ExpectedReturnDate,
-                    isOverdue = c.ExpectedReturnDate < DateTime.UtcNow
+                    isOverdue = c.ExpectedReturnDate.Date < SastTimeHelper.GetTodaySast()
                 })
                 .ToListAsync();
 
@@ -291,6 +294,7 @@ namespace AssetTracker.API.Controller
 
             // Hash the temporary password
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(temporaryPassword);
+            user.MustChangePassword = true; // Mark that password change is required on next login
 
             // LOG THE AUDIT TRAIL
             var adminEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? "System Admin";
@@ -306,6 +310,16 @@ namespace AssetTracker.API.Controller
             _context.AuditTrails.Add(auditLog);
 
             await _context.SaveChangesAsync();
+
+            // Send temporary password email to the user
+            try
+            {
+                await _emailService.SendTemporaryPasswordEmailAsync(user.Email, user.FullName, temporaryPassword);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to send temporary password email to {user.Email}: {ex.Message}");
+            }
 
             return Ok(new 
             { 

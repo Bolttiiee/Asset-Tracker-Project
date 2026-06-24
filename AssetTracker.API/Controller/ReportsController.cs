@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AssetTracker.API.Data;
 using AssetTracker.API.Models;
+using AssetTracker.API.Services;
 using OfficeOpenXml;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -40,15 +41,17 @@ namespace AssetTracker.API.Controller
                 .Include(c => c.Asset)
                 .AsQueryable();
 
-            // Filter by date range
+            // Filter by date range (aligned with start/end of SAST calendar day converted to UTC boundaries)
             if (fromDate.HasValue)
             {
-                query = query.Where(c => c.CheckoutTimestamp.Date >= fromDate.Value.Date);
+                var fromUtc = TimeZoneInfo.ConvertTimeToUtc(fromDate.Value.Date, SastTimeHelper.SastTimeZone);
+                query = query.Where(c => c.CheckoutTimestamp >= fromUtc);
             }
 
             if (toDate.HasValue)
             {
-                query = query.Where(c => c.CheckoutTimestamp.Date <= toDate.Value.Date);
+                var toUtc = TimeZoneInfo.ConvertTimeToUtc(toDate.Value.Date.AddDays(1), SastTimeHelper.SastTimeZone);
+                query = query.Where(c => c.CheckoutTimestamp < toUtc);
             }
 
             // Filter by category
@@ -101,12 +104,18 @@ namespace AssetTracker.API.Controller
                 .Include(c => c.Asset)
                 .AsQueryable();
 
-            // Apply same filters
+            // Apply same filters (aligned with start/end of SAST calendar day converted to UTC boundaries)
             if (fromDate.HasValue)
-                query = query.Where(c => c.CheckoutTimestamp.Date >= fromDate.Value.Date);
+            {
+                var fromUtc = TimeZoneInfo.ConvertTimeToUtc(fromDate.Value.Date, SastTimeHelper.SastTimeZone);
+                query = query.Where(c => c.CheckoutTimestamp >= fromUtc);
+            }
 
             if (toDate.HasValue)
-                query = query.Where(c => c.CheckoutTimestamp.Date <= toDate.Value.Date);
+            {
+                var toUtc = TimeZoneInfo.ConvertTimeToUtc(toDate.Value.Date.AddDays(1), SastTimeHelper.SastTimeZone);
+                query = query.Where(c => c.CheckoutTimestamp < toUtc);
+            }
 
             if (!string.IsNullOrWhiteSpace(category) && category != "All")
                 query = query.Where(c => c.Asset!.Category == category);
@@ -147,13 +156,15 @@ namespace AssetTracker.API.Controller
             int row = 2;
             foreach (var checkout in checkouts)
             {
-                worksheet.Cells[row, 1].Value = checkout.CheckoutTimestamp.ToString("yyyy-MM-dd HH:mm");
+                worksheet.Cells[row, 1].Value = TimeZoneInfo.ConvertTimeFromUtc(checkout.CheckoutTimestamp, SastTimeHelper.SastTimeZone).ToString("yyyy-MM-dd HH:mm");
                 worksheet.Cells[row, 2].Value = checkout.Asset?.Name ?? "N/A";
                 worksheet.Cells[row, 3].Value = checkout.Asset?.Category ?? "N/A";
                 worksheet.Cells[row, 4].Value = checkout.Asset?.SerialNumber ?? "N/A";
                 worksheet.Cells[row, 5].Value = checkout.UserFullName;
                 worksheet.Cells[row, 6].Value = checkout.UserEmail;
-                worksheet.Cells[row, 7].Value = checkout.ActualReturnDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Returned";
+                worksheet.Cells[row, 7].Value = checkout.ActualReturnDate.HasValue 
+                    ? TimeZoneInfo.ConvertTimeFromUtc(checkout.ActualReturnDate.Value, SastTimeHelper.SastTimeZone).ToString("yyyy-MM-dd HH:mm") 
+                    : "Not Returned";
                 worksheet.Cells[row, 8].Value = checkout.Status;
                 row++;
             }
@@ -165,7 +176,8 @@ namespace AssetTracker.API.Controller
             var excelData = package.GetAsByteArray();
 
             // Return file
-            var fileName = $"CheckoutHistory_{DateTime.UtcNow:yyyyMMdd_HHmmss}.xlsx";
+            var nowSast = SastTimeHelper.GetNowSast();
+            var fileName = $"CheckoutHistory_{nowSast:yyyyMMdd_HHmmss}.xlsx";
             return File(excelData, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
@@ -182,12 +194,18 @@ namespace AssetTracker.API.Controller
                 .Include(c => c.Asset)
                 .AsQueryable();
 
-            // Apply same filters
+            // Apply same filters (aligned with start/end of SAST calendar day converted to UTC boundaries)
             if (fromDate.HasValue)
-                query = query.Where(c => c.CheckoutTimestamp.Date >= fromDate.Value.Date);
+            {
+                var fromUtc = TimeZoneInfo.ConvertTimeToUtc(fromDate.Value.Date, SastTimeHelper.SastTimeZone);
+                query = query.Where(c => c.CheckoutTimestamp >= fromUtc);
+            }
 
             if (toDate.HasValue)
-                query = query.Where(c => c.CheckoutTimestamp.Date <= toDate.Value.Date);
+            {
+                var toUtc = TimeZoneInfo.ConvertTimeToUtc(toDate.Value.Date.AddDays(1), SastTimeHelper.SastTimeZone);
+                query = query.Where(c => c.CheckoutTimestamp < toUtc);
+            }
 
             if (!string.IsNullOrWhiteSpace(category) && category != "All")
                 query = query.Where(c => c.Asset!.Category == category);
@@ -227,8 +245,8 @@ namespace AssetTracker.API.Controller
                             // Report info
                             column.Item().Text(text =>
                             {
-                                text.Span("Generated: ").SemiBold();
-                                text.Span(DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm UTC"));
+                                var nowSast = SastTimeHelper.GetNowSast();
+                                text.Span(nowSast.ToString("yyyy-MM-dd HH:mm SAST"));
 
                                 if (fromDate.HasValue || toDate.HasValue)
                                 {
@@ -277,13 +295,15 @@ namespace AssetTracker.API.Controller
                                 // Data rows
                                 foreach (var checkout in checkouts)
                                 {
-                                    table.Cell().Element(CellStyle).Text(checkout.CheckoutTimestamp.ToString("yyyy-MM-dd HH:mm"));
+                                    table.Cell().Element(CellStyle).Text(TimeZoneInfo.ConvertTimeFromUtc(checkout.CheckoutTimestamp, SastTimeHelper.SastTimeZone).ToString("yyyy-MM-dd HH:mm"));
                                     table.Cell().Element(CellStyle).Text(checkout.Asset?.Name ?? "N/A");
                                     table.Cell().Element(CellStyle).Text(checkout.Asset?.Category ?? "N/A");
                                     table.Cell().Element(CellStyle).Text(checkout.Asset?.SerialNumber ?? "N/A");
                                     table.Cell().Element(CellStyle).Text(checkout.UserFullName);
                                     table.Cell().Element(CellStyle).Text(checkout.UserEmail);
-                                    table.Cell().Element(CellStyle).Text(checkout.ActualReturnDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Returned");
+                                    table.Cell().Element(CellStyle).Text(checkout.ActualReturnDate.HasValue 
+                                        ? TimeZoneInfo.ConvertTimeFromUtc(checkout.ActualReturnDate.Value, SastTimeHelper.SastTimeZone).ToString("yyyy-MM-dd HH:mm") 
+                                        : "Not Returned");
                                     table.Cell().Element(CellStyle).Text(checkout.Status);
 
                                     static IContainer CellStyle(IContainer container)
@@ -313,7 +333,8 @@ namespace AssetTracker.API.Controller
             var pdfData = document.GeneratePdf();
 
             // Return file
-            var fileName = $"CheckoutHistory_{DateTime.UtcNow:yyyyMMdd_HHmmss}.pdf";
+            var nowSast = SastTimeHelper.GetNowSast();
+            var fileName = $"CheckoutHistory_{nowSast:yyyyMMdd_HHmmss}.pdf";
             return File(pdfData, "application/pdf", fileName);
         }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace AssetTracker.API.Models
@@ -47,5 +47,8 @@ namespace AssetTracker.API.Models
 
         public string? PasswordResetToken { get; set; }
         public DateTime? ResetTokenExpiry { get; set; }
+
+        [Required]
+        public bool MustChangePassword { get; set; } = false;
     }
 }

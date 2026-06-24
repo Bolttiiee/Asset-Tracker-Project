@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -45,7 +45,7 @@ namespace AssetTracker.API.Models
         /// </summary>
         [NotMapped]
         public string EffectiveStatus =>
-            Status == "Active" && ExpectedReturnDate.Date < DateTime.UtcNow.Date
+            Status == "Active" && ExpectedReturnDate.Date < Services.SastTimeHelper.GetTodaySast()
                 ? "Overdue"
                 : Status;
 

@@ -151,6 +151,29 @@ namespace AssetTracker.API.Services
             await SendEmailAsync(toEmail, subject, body);
         }
 
+        public async Task SendTemporaryPasswordEmailAsync(string toEmail, string userFullName, string temporaryPassword)
+        {
+            var subject = "Temporary Password for Asset Tracker";
+            var body = $@"
+                <html>
+                <body style='font-family: Arial, sans-serif;'>
+                    <h2 style='color: #2b6cb0;'>Temporary Password Issued</h2>
+                    <p>Dear {userFullName},</p>
+                    <p>An administrator has reset your password for your Asset Tracker account.</p>
+                    <p>Please log in using your email address and the temporary password below. You will be prompted to change your password immediately after logging in.</p>
+                    
+                    <div style='background-color: #f5f5f5; padding: 15px; border-left: 4px solid #2b6cb0; margin: 20px 0; font-family: monospace; font-size: 16px; font-weight: bold;'>
+                        {temporaryPassword}
+                    </div>
+
+                    <p>Asset Tracker System</p>
+                </body>
+                </html>
+            ";
+
+            await SendEmailAsync(toEmail, subject, body);
+        }
+
         public async Task<bool> TestEmailConnectionAsync()
         {
             try

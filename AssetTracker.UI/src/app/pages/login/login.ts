@@ -39,8 +39,13 @@ export class LoginComponent {
     });
   }
 
+  private errorTimeout: any;
+  private forgotSuccessTimeout: any;
+  private forgotErrorTimeout: any;
+
   onSubmit() {
     this.isSubmitted.set(true);
+    if (this.errorTimeout) clearTimeout(this.errorTimeout);
     this.errorMessage.set('');
 
     if (this.loginForm.invalid) {
@@ -63,12 +68,17 @@ export class LoginComponent {
         this.errorMessage.set(
           err?.error?.message || err?.message || 'Unable to reach the authentication service.'
         );
+        this.errorTimeout = setTimeout(() => {
+          this.errorMessage.set('');
+        }, 4000);
       }
     });
   }
 
   triggerForgotPassword(): void {
     this.showForgotPasswordBox.set(true);
+    if (this.forgotSuccessTimeout) clearTimeout(this.forgotSuccessTimeout);
+    if (this.forgotErrorTimeout) clearTimeout(this.forgotErrorTimeout);
     this.forgotPasswordMessage.set('');
     this.forgotPasswordError.set('');
   }
@@ -77,6 +87,8 @@ export class LoginComponent {
     this.showForgotPasswordBox.set(false);
     this.isForgotSubmitting.set(false);
     this.forgotPasswordForm.reset();
+    if (this.forgotSuccessTimeout) clearTimeout(this.forgotSuccessTimeout);
+    if (this.forgotErrorTimeout) clearTimeout(this.forgotErrorTimeout);
     this.forgotPasswordMessage.set('');
     this.forgotPasswordError.set('');
   }
@@ -89,6 +101,8 @@ export class LoginComponent {
 
     const email = String(this.forgotPasswordForm.value.email || '').trim();
     this.isForgotSubmitting.set(true);
+    if (this.forgotSuccessTimeout) clearTimeout(this.forgotSuccessTimeout);
+    if (this.forgotErrorTimeout) clearTimeout(this.forgotErrorTimeout);
     this.forgotPasswordMessage.set('');
     this.forgotPasswordError.set('');
 
@@ -97,9 +111,15 @@ export class LoginComponent {
     ).subscribe({
       next: (res) => {
         this.forgotPasswordMessage.set(res?.message || 'Reset instructions have been sent if the account exists.');
+        this.forgotSuccessTimeout = setTimeout(() => {
+          this.forgotPasswordMessage.set('');
+        }, 4000);
       },
       error: (err) => {
         this.forgotPasswordError.set(err?.error?.message || 'Failed to dispatch reset sequence.');
+        this.forgotErrorTimeout = setTimeout(() => {
+          this.forgotPasswordError.set('');
+        }, 4000);
       }
     });
   }

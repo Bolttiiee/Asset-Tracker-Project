@@ -9,6 +9,9 @@
       <button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all duration-300" (click)="runSearch()" [disabled]="loading || !!dateRangeError">
         {{ loading ? 'Applying...' : 'Apply Filters' }}
       </button>
+      <button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 shadow-sm transition-all duration-300 disabled:opacity-60" (click)="viewAll()" [disabled]="loading">
+        View All
+      </button>
       <button class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 shadow-sm transition-all duration-300 disabled:opacity-60" (click)="downloadExcel()" [disabled]="loading || exportingExcel || exportingPdf || !!dateRangeError">
         {{ exportingExcel ? 'Downloading...' : 'Excel' }}
       </button>

@@ -161,7 +161,7 @@ namespace AssetTracker.API.Tests.Controllers
             {
                 AssetID = 1,
                 EmployeeEmail = "user@test.com",
-                ExpectedReturnDate = DateTime.UtcNow.Date // Due today => already overdue
+                ExpectedReturnDate = SastTimeHelper.GetTodaySast() // Due today => already overdue
             };
 
             // Act

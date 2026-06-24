@@ -85,6 +85,17 @@ export class ReportsComponent implements OnInit {
     });
   }
 
+  viewAll(): void {
+    this.filters = {
+      fromDate: '',
+      toDate: '',
+      category: 'All',
+      assetId: undefined,
+      userId: undefined
+    };
+    this.runSearch();
+  }
+
   downloadExcel(): void {
     this.exportingExcel = true;
     this.reportService.downloadExcel(this.filters).pipe(

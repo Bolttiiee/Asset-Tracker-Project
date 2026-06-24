@@ -7,6 +7,7 @@ namespace AssetTracker.API.Services
         Task SendOverdueReminderAsync(Checkout checkout);
         Task SendAdminOverdueDigestAsync(List<OverdueCheckoutInfo> overdueCheckouts);
         Task SendPasswordResetEmailAsync(string toEmail, string resetLink);
+        Task SendTemporaryPasswordEmailAsync(string toEmail, string userFullName, string temporaryPassword);
         Task<bool> TestEmailConnectionAsync();
     }
 

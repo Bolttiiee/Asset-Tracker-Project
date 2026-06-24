@@ -68,7 +68,7 @@ namespace AssetTracker.API.Services
             var result = new OverdueReminderResult();
 
             // Get all overdue checkouts (an item due today is treated as overdue)
-            var today = DateTime.UtcNow.Date;
+            var today = SastTimeHelper.GetTodaySast();
             var overdueCheckouts = await _context.Checkouts
                 .Include(c => c.Asset)
                 .Include(c => c.User)

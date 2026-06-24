@@ -64,6 +64,9 @@ export class MyAssetsComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
+  private successTimeout: any;
+  private errorTimeout: any;
+
   confirmReturn(): void {
     const asset = this.pendingReturnAsset;
     this.confirmationModalOpen = false;
@@ -75,13 +78,19 @@ export class MyAssetsComponent implements OnInit {
     if (!asset) return;
 
     this.returningAssetId = asset.assetID;
+
+    // Clear previous timeouts and messages
+    if (this.successTimeout) clearTimeout(this.successTimeout);
+    if (this.errorTimeout) clearTimeout(this.errorTimeout);
     this.successMessage = '';
+    this.errorMessage = '';
+
     this.checkoutService.returnAsset(asset.assetID).subscribe({
       next: () => {
         this.returningAssetId = null;
         this.successMessage = `${asset.assetName} returned successfully. Status restored to Available.`;
         this.cdr.markForCheck();
-        setTimeout(() => {
+        this.successTimeout = setTimeout(() => {
           this.successMessage = '';
           this.cdr.markForCheck();
         }, 4000);
@@ -91,6 +100,10 @@ export class MyAssetsComponent implements OnInit {
         this.returningAssetId = null;
         this.errorMessage = err?.error?.message || 'Return failed.';
         this.cdr.markForCheck();
+        this.errorTimeout = setTimeout(() => {
+          this.errorMessage = '';
+          this.cdr.markForCheck();
+        }, 4000);
       }
     });
   }

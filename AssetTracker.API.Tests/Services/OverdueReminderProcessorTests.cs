@@ -41,7 +41,7 @@ namespace AssetTracker.API.Tests.Services
                 UserFullName = "Test User",
                 UserEmail = "user@test.com",
                 CheckoutTimestamp = DateTime.UtcNow.AddDays(-30),
-                ExpectedReturnDate = DateTime.UtcNow.Date.AddDays(daysUntilDue),
+                ExpectedReturnDate = SastTimeHelper.GetTodaySast().AddDays(daysUntilDue),
                 Status = status
             };
             context.Checkouts.Add(checkout);

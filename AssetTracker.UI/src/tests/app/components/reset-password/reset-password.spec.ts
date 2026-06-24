@@ -114,7 +114,7 @@ describe('ResetPasswordComponent', () => {
     };
 
     try {
-      component.resetForm.setValue({ password: 'NewPass123!' });
+      component.resetForm.setValue({ password: 'NewPass123!', confirmPassword: 'NewPass123!' });
       component.submitNewPassword();
       resetResponse$.next({ message: 'Password updated successfully.' });
       resetResponse$.complete();
@@ -133,7 +133,7 @@ describe('ResetPasswordComponent', () => {
     const authService = TestBed.inject(AuthService) as any;
     authService.resetPassword = () => throwError(() => ({ error: { message: 'Token expired.' } }));
 
-    component.resetForm.setValue({ password: 'NewPass123!' });
+    component.resetForm.setValue({ password: 'NewPass123!', confirmPassword: 'NewPass123!' });
     component.submitNewPassword();
 
     expect(component.errorMessage).toBe('Token expired.');
@@ -174,7 +174,7 @@ describe('ResetPasswordComponent', () => {
     expect(forcedComponent.forced).toBe(true);
     expect(forcedComponent.errorMessage).toBe('');
 
-    forcedComponent.resetForm.setValue({ password: 'NewPass123!' });
+    forcedComponent.resetForm.setValue({ password: 'NewPass123!', confirmPassword: 'NewPass123!' });
     forcedComponent.submitNewPassword();
 
     expect(changeCalls).toEqual(['NewPass123!']);

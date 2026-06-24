@@ -171,8 +171,11 @@ export class RegisterComponent implements OnInit {
     return /[!@#$%^&*(),.?":{}|<>]/.test(this.registerForm.get('password')?.value || '');
   }
 
+  private errorTimeout: any;
+
   onSubmit(): void {
     this.isSubmitted = true;
+    if (this.errorTimeout) clearTimeout(this.errorTimeout);
     this.errorMessage = '';
     this.successMessage = '';
 
@@ -198,6 +201,10 @@ export class RegisterComponent implements OnInit {
           ? 'Cannot reach the server. Please check your connection and try again.'
           : err?.error?.message || 'An error occurred during registration.';
         this.cdr.markForCheck();
+        this.errorTimeout = setTimeout(() => {
+          this.errorMessage = '';
+          this.cdr.markForCheck();
+        }, 4000);
       }
     });
   }

@@ -98,7 +98,7 @@ namespace AssetTracker.API.Controller
                 return BadRequest(new { message = "Expected return date is required." });
             }
 
-            if (dto.ExpectedReturnDate.Value.Date < DateTime.UtcNow.Date)
+            if (dto.ExpectedReturnDate.Value.Date < Services.SastTimeHelper.GetTodaySast())
             {
                 return BadRequest(new { message = "Expected return date cannot be in the past." });
             }
@@ -149,7 +149,7 @@ namespace AssetTracker.API.Controller
             // email immediately instead of waiting for the scheduled sweep. Reuses the same email
             // and EMAIL_REMINDER audit logging as the overdue-reminder job.
             var reminderEmailSent = false;
-            if (checkout.ExpectedReturnDate.Date <= DateTime.UtcNow.Date)
+            if (checkout.ExpectedReturnDate.Date <= Services.SastTimeHelper.GetTodaySast())
             {
                 checkout.Asset = asset; // Ensure the email service has asset details available
                 try
@@ -164,7 +164,7 @@ namespace AssetTracker.API.Controller
                         PerformedByEmail = adminEmail,
                         Timestamp = DateTime.UtcNow,
                         Details = $"Immediate overdue reminder email sent to {user.FullName} ({user.Email}) on assignment. " +
-                                  $"Days overdue: {(DateTime.UtcNow.Date - checkout.ExpectedReturnDate.Date).Days}"
+                                  $"Days overdue: {(Services.SastTimeHelper.GetTodaySast() - checkout.ExpectedReturnDate.Date).Days}"
                     };
                     _context.AuditTrails.Add(reminderAudit);
                     await _context.SaveChangesAsync();
@@ -302,7 +302,7 @@ namespace AssetTracker.API.Controller
                     serialNumber = c.Asset.SerialNumber,
                     checkoutDate = c.CheckoutTimestamp,
                     expectedReturnDate = c.ExpectedReturnDate,
-                    isOverdue = c.ExpectedReturnDate < DateTime.UtcNow // Flag overdue assets
+                    isOverdue = c.ExpectedReturnDate.Date < Services.SastTimeHelper.GetTodaySast() // Flag overdue assets
                 })
                 .OrderBy(c => c.expectedReturnDate)
                 .ToListAsync();
@@ -371,7 +371,7 @@ namespace AssetTracker.API.Controller
         [Authorize(Roles = "Admin,Asset Manager")]
         public async Task<ActionResult<IEnumerable<object>>> GetOverdueCheckouts()
         {
-            var today = DateTime.UtcNow.Date;
+            var today = Services.SastTimeHelper.GetTodaySast();
             var overdueCheckouts = await _context.Checkouts
                 .Include(c => c.Asset)
                 .Include(c => c.User)
@@ -412,7 +412,7 @@ namespace AssetTracker.API.Controller
                 });
             }
 
-            var today = DateTime.UtcNow.Date;
+            var today = Services.SastTimeHelper.GetTodaySast();
             var overdueCheckouts = await _context.Checkouts
                 .Include(c => c.Asset)
                 .Include(c => c.User)
