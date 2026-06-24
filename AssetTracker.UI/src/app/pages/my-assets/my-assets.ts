@@ -24,6 +24,18 @@ export class MyAssetsComponent implements OnInit {
   confirmationMessage = '';
   private pendingReturnAsset: MyCheckoutAsset | null = null;
 
+  getUserName(): string {
+    const profile = localStorage.getItem('user_profile');
+    if (!profile) return 'My';
+    try {
+      const parsed = JSON.parse(profile);
+      const name = parsed?.fullName || parsed?.FullName || '';
+      return name ? `${name}'s` : 'My';
+    } catch {
+      return 'My';
+    }
+  }
+
   constructor(private checkoutService: CheckoutService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {

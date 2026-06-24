@@ -95,4 +95,12 @@ describe('MyAssetsComponent', () => {
     expect(component.errorMessage).toBe('Return failed.');
     expect(component.returningAssetId).toBeNull();
   });
+
+  it('getUserName returns user name formatted with possessive S or falls back to My', () => {
+    localStorage.clear();
+    expect(component.getUserName()).toBe('My');
+
+    localStorage.setItem('user_profile', JSON.stringify({ fullName: 'John Doe' }));
+    expect(component.getUserName()).toBe("John Doe's");
+  });
 });
