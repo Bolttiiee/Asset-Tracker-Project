@@ -117,9 +117,9 @@ We welcome contributions! Please adhere to the following workflow:
 ---
 
 ## 📚 Additional Documentation
-For in-depth guides, check the following markdown files:
-* 📖 [START_HERE.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/START_HERE.md) — Quick onboarding guide.
-* ✉️ [EMAIL_SETUP_GUIDE.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/EMAIL_SETUP_GUIDE.md) — SMTP & SendGrid setup.
-* 🏗️ [ARCHITECTURE_OVERVIEW.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/ARCHITECTURE_OVERVIEW.md) — Architecture and design.
-* 📡 [API_QUICK_REFERENCE.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/API_QUICK_REFERENCE.md) — Endpoint reference.
-* 📝 [TESTING_CHECKLIST.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/TESTING_CHECKLIST.md) — QA verification steps.
+For in-depth guides, check the following files in the [docs](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs) directory:
+* ✉️ [EMAIL_SETUP_GUIDE.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/EMAIL_SETUP_GUIDE.md) — SMTP & SendGrid setup.
+* 🏗️ [ARCHITECTURE_OVERVIEW.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/ARCHITECTURE_OVERVIEW.md) — Architecture and design.
+* 📡 [API_QUICK_REFERENCE.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/API_QUICK_REFERENCE.md) — Endpoint reference.
+* 📝 [TESTING_CHECKLIST.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/TESTING_CHECKLIST.md) — QA verification steps.
+* 📋 [COMPLIANCE_IMPLEMENTATION_SUMMARY.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/COMPLIANCE_IMPLEMENTATION_SUMMARY.md) — Detailed compliance notes.
