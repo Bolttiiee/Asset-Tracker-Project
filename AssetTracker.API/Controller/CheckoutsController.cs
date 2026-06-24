@@ -92,6 +92,16 @@ namespace AssetTracker.API.Controller
                 return NotFound(new { message = "Employee record not found." });
             }
 
+            // VALIDATION 5.5: Standard User self-assignment check
+            if (User.IsInRole("Standard User"))
+            {
+                var loggedInEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+                if (string.IsNullOrEmpty(loggedInEmail) || !string.Equals(dto.EmployeeEmail, loggedInEmail, StringComparison.OrdinalIgnoreCase))
+                {
+                    return StatusCode(403, new { message = "Checkout rejected: standard users can only assign assets to themselves." });
+                }
+            }
+
             // VALIDATION 6: Expected return date validation
             if (!dto.ExpectedReturnDate.HasValue)
             {

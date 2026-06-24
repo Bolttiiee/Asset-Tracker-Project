@@ -504,7 +504,16 @@ export class InventoryGridComponent implements OnInit {
     this.isHeaderAssign = true;
     this.checkoutAssetId = null;
     this.checkoutAssetName = '';
-    this.clearEmployeeFields();
+    
+    if (!this.isAdminOrManager()) {
+      const profile = localStorage.getItem('user_profile');
+      const parsed = profile ? JSON.parse(profile) : null;
+      this.checkoutFullName = parsed?.fullName || parsed?.FullName || '';
+      this.checkoutEmail = parsed?.email || parsed?.Email || '';
+    } else {
+      this.clearEmployeeFields();
+    }
+    
     this.checkoutDrawerOpen = true;
   }
 

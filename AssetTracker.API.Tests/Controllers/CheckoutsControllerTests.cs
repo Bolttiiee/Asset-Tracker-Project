@@ -324,6 +324,51 @@ namespace AssetTracker.API.Tests.Controllers
             payload.GetProperty("message").GetString().Should().Contain("already has this asset");
         }
 
+        [Fact]
+        public async Task AssignAsset_AsStandardUserForSelf_ReturnsOk()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new CheckoutsController(context, _mockEmailService.Object, _mockConfiguration.Object);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "user@test.com", "Standard User");
+            var dto = new CheckoutDto
+            {
+                AssetID = 1,
+                EmployeeEmail = "user@test.com",
+                ExpectedReturnDate = DateTime.UtcNow.AddDays(7)
+            };
+
+            // Act
+            var result = await controller.AssignAsset(dto);
+
+            // Assert
+            result.Should().BeOfType<OkObjectResult>();
+        }
+
+        [Fact]
+        public async Task AssignAsset_AsStandardUserForOther_ReturnsForbidden()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new CheckoutsController(context, _mockEmailService.Object, _mockConfiguration.Object);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "user@test.com", "Standard User");
+            var dto = new CheckoutDto
+            {
+                AssetID = 1,
+                EmployeeEmail = "admin@test.com",
+                ExpectedReturnDate = DateTime.UtcNow.AddDays(7)
+            };
+
+            // Act
+            var result = await controller.AssignAsset(dto);
+
+            // Assert
+            var objectResult = result.Should().BeOfType<ObjectResult>().Subject;
+            objectResult.StatusCode.Should().Be(403);
+            var payload = JsonSerializer.SerializeToElement(objectResult.Value);
+            payload.GetProperty("message").GetString().Should().Contain("only assign assets to themselves");
+        }
+
         #endregion
 
         #region ReturnAsset Tests
