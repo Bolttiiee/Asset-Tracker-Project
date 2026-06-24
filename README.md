@@ -1,101 +1,125 @@
-# Internal Asset Tracker
+# 📋 Internal Asset Tracker
 
-An internal asset-tracking system: an ASP.NET Core Web API backend (`AssetTracker.API`) with an Angular frontend (`AssetTracker.UI`). It manages assets, checkouts/returns, user accounts, reporting, and automated overdue-return reminders.
+An enterprise-grade, full-stack internal asset-tracking system featuring a robust ASP.NET Core Web API backend and a responsive Angular frontend. Designed to manage equipment lifecycles, checkout transactions, audit trails, and automated email reminders for overdue returns.
 
-## Tech stack
+---
 
-| Component | Technology |
-|-----------|------------|
-| Backend API | ASP.NET Core (`AssetTracker.API`, .NET 8) |
-| Tests | xUnit (`AssetTracker.API.Tests`, .NET 10) |
-| Frontend | Angular (`AssetTracker.UI`) |
-| Data | Entity Framework Core + SQL Server |
-| Email | SMTP (default) or SendGrid, selectable via `Email:Provider` |
+## 🚀 Introduction
 
-## Prerequisites
+The **Internal Asset Tracker** is built to solve the challenges of tracking internal company hardware and equipment (laptops, keyboards, monitors, etc.) across employees.
 
-- [.NET SDK](https://dotnet.microsoft.com/download) (8.0 and 10.0)
-- SQL Server (e.g. SQL Server Express / LocalDB)
-- EF Core tools (once per machine):
+### Key Objectives
+* **Lifecycle Monitoring**: Track assets from acquisition through maintenance to decommissioning.
+* **Accountability**: Real-time assignment/checkout of available assets to active employees, preventing duplicate checkouts or unauthorized assignments.
+* **Automation**: Proactive email notifications and alerts notifying users of overdue assets and sending daily status digests to administrators.
+* **Compliance & Auditing**: Maintain a permanent, tamper-proof record of all checkouts, returns, maintenance logs, and administrative actions.
+
+---
+
+## 🛠️ Getting Started
+
+Follow these steps to configure, build, and run the project locally.
+
+### 📋 Prerequisites
+Make sure you have the following installed on your machine:
+* **SDKs**: [.NET SDK 8.0 & 10.0](https://dotnet.microsoft.com/download)
+* **Database**: SQL Server (LocalDB / Express / Standard)
+* **Package Manager**: [Node.js + npm](https://nodejs.org/) (for Angular frontend)
+* **EF Core CLI** (run once globally):
   ```powershell
   dotnet tool install --global dotnet-ef
   ```
-- Node.js + npm (only for the Angular UI)
 
-## Getting started (after cloning)
+---
 
-Secret values are **not** stored in the repo. `appsettings.json` ships with blank placeholders; you supply the real values via [.NET User Secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets) in development (or environment variables in production). See `AssetTracker.API/appsettings.Example.json` for the full config shape.
+### 📦 Installation & Setup
 
-### 1. Set the required secrets (per machine)
+#### 1. Clone & Configuration
+Clone the repository and set up configuration secrets. The application uses .NET User Secrets in development to keep credentials secure.
 
 ```powershell
-# Required: signing key for JWT auth (use a long, random value, 32+ chars)
-dotnet user-secrets set "Jwt:Secret" "<a-64-char-key>" --project AssetTracker.API
+# Set JWT signing key (Required: 64-char key recommended)
+dotnet user-secrets set "Jwt:Secret" "YOUR_SUPER_SECRET_64_CHARACTER_KEY_GOES_HERE" --project AssetTracker.API
 
-# Optional: only when you have a real value (needed to actually send email)
-dotnet user-secrets set "Email:SmtpPassword" "<gmail-app-password>" --project AssetTracker.API
+# Set SMTP password (Optional: required for sending emails)
+dotnet user-secrets set "Email:SmtpPassword" "your-smtp-app-password" --project AssetTracker.API
 ```
+> See `AssetTracker.API/appsettings.Example.json` for the full configuration schema. For detailed email configuration, refer to `EMAIL_SETUP_GUIDE.md`.
 
-> The app fails fast at startup with a clear message if `Jwt:Secret` is not set.
-> For Gmail, `Email:SmtpPassword` is a 16-character **App Password** — see `EMAIL_SETUP_GUIDE.md`.
-
-### 2. Create / update the database
-
-Confirm `ConnectionStrings:DefaultConnection` in `AssetTracker.API/appsettings.json` points at your SQL Server instance, then apply migrations:
-
+#### 2. Database Migration
+Update the database schema by applying EF Core migrations:
 ```powershell
 dotnet ef database update --project AssetTracker.API
 ```
 
-### 3. Run the API
-
+#### 3. Run the Backend API
+Start the Web API server:
 ```powershell
-dotnet run --project AssetTracker.API
+dotnet run --project AssetTracker.API --launch-profile https
 ```
+* **API Endpoint**: `https://localhost:7175` / `http://localhost:5167`
+* **API Documentation**: Access the interactive Swagger UI at `https://localhost:7175/swagger`
 
-- API: `http://localhost:5167` (and an HTTPS port from `launchSettings.json`)
-- Swagger UI (Development): `/swagger`
-
-### 4. Run the frontend (optional)
-
+#### 4. Run the Frontend UI
+Navigate to the UI project, install dependencies, and start the development server:
 ```powershell
 cd AssetTracker.UI
 npm install
 npm start
 ```
+* **UI Endpoint**: `http://localhost:4200` (auto-opens in your browser)
 
-The Angular dev server runs on `http://localhost:4200`.
+---
 
-## Configuration reference
+## ⚙️ Software Dependencies & Tech Stack
 
-Secret/sensitive keys (set via user secrets in dev, environment variables in prod):
+| Tier | Technology | Purpose |
+|------|------------|---------|
+| **Backend API** | ASP.NET Core (.NET 8) | RESTful API, JWT authentication, role authorization |
+| **Database ORM**| Entity Framework Core | Database queries, migrations, and relationship management |
+| **Frontend** | Angular | Responsive single-page application (SPA), Tailwind CSS styling |
+| **Email Service**| SMTP / SendGrid | Automated transactional email notifications |
+| **Task Scheduler**| .NET Background Service | Daily overdue sweep at 08:00 SAST |
 
-| Key | Purpose |
-|-----|---------|
-| `Jwt:Secret` | **Required.** Signing key for JWT auth. |
-| `Email:SmtpPassword` | SMTP password / app password (required to send email). |
-| `Email:SendGridApiKey` | Only if `Email:Provider` is set to `SendGrid`. |
+---
 
-In production, use the environment-variable form with `__` as the separator, e.g. `Jwt__Secret`, `Email__SmtpPassword`.
+## 🧪 Build and Test
 
-The email provider is chosen by `Email:Provider` (`SMTP` by default, or `SendGrid`).
+The project has comprehensive unit and integration test coverage for both backend and frontend.
 
-## Overdue return reminders
-
-A background service (`OverdueReminderService`) runs daily at **08:00 SAST** (06:00 UTC) to email users with overdue assets and send an admin digest. Sends use bounded parallelism; tune the concurrency with `Email:MaxParallelSends` (default `4`; set to `1` for sequential sending). Admins can also trigger a run manually via the API.
-
-## Running the tests
-
+### 🖥️ Backend Tests (xUnit)
+Run the C# test suite:
 ```powershell
 dotnet test
 ```
 
-See `AssetTracker.API.Tests/README_START_HERE.md` for details on the test suite.
+### 🎨 Frontend Tests (Vitest / Angular CLI)
+Run the Angular UI test suite:
+```powershell
+cd AssetTracker.UI
+npm test -- --watch=false
+```
 
-## Additional documentation
+---
 
-- `START_HERE.md` — quick start
-- `EMAIL_SETUP_GUIDE.md` — email/SMTP setup (Gmail, Outlook, SendGrid)
-- `ARCHITECTURE_OVERVIEW.md` — architecture
-- `API_QUICK_REFERENCE.md` — API endpoints
-- `PROJECT_COMPLIANCE_REVIEW.md` / `COMPLIANCE_IMPLEMENTATION_SUMMARY.md` — compliance notes
+## 🤝 Contribute
+
+We welcome contributions! Please adhere to the following workflow:
+
+1. **Create a branch**: Use descriptive names (`feature/`, `bugfix/`).
+2. **Code Quality**: Keep component responsibilities separate, write unit tests for new logic, and maintain compliance standards.
+3. **Database Changes**: If modifying database models, generate a new migration:
+   ```powershell
+   dotnet ef migrations add NameOfYourMigration --project AssetTracker.API
+   ```
+4. **Pull Requests**: Ensure all unit tests pass before submitting a pull request.
+
+---
+
+## 📚 Additional Documentation
+For in-depth guides, check the following markdown files:
+* 📖 [START_HERE.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/START_HERE.md) — Quick onboarding guide.
+* ✉️ [EMAIL_SETUP_GUIDE.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/EMAIL_SETUP_GUIDE.md) — SMTP & SendGrid setup.
+* 🏗️ [ARCHITECTURE_OVERVIEW.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/ARCHITECTURE_OVERVIEW.md) — Architecture and design.
+* 📡 [API_QUICK_REFERENCE.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/API_QUICK_REFERENCE.md) — Endpoint reference.
+* 📝 [TESTING_CHECKLIST.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/TESTING_CHECKLIST.md) — QA verification steps.
