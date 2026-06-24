@@ -5,23 +5,61 @@
 
 
 @theme {
-  --color-brand-primary: #4f46e5; /* Indigo 600 */
-  --color-brand-primary-hover: #4338ca; /* Indigo 700 */
-  --color-brand-accent: #6366f1; /* Indigo 500 */
+  --color-brand-primary: #7048e8; /* Royal Violet */
+  --color-brand-primary-hover: #5f3dc4;
+  --color-brand-accent: #845ef7;
   
   --color-surface: #ffffff;
-  --color-surface-muted: #f8fafc; /* slate-50 */
-  --color-surface-hover: #f1f5f9; /* slate-100 */
+  --color-surface-muted: #fbfbfb;
+  --color-surface-hover: #f5f5f7;
   
-  --color-txt-primary: #0f172a; /* slate-900 */
-  --color-txt-secondary: #475569; /* slate-600 */
-  --color-txt-tertiary: #64748b; /* slate-500 */
+  --color-txt-primary: #1c1c1e;
+  --color-txt-secondary: #515154;
+  --color-txt-tertiary: #8e8e93;
   
-  --color-line-soft: #f1f5f9; /* slate-100 */
-  --color-line-medium: #e2e8f0; /* slate-200 */
+  --color-line-soft: #f2f2f7;
+  --color-line-medium: #e5e5ea;
   
   --radius-lg: 16px;
   --radius-md: 10px;
+
+  /* Custom Indigo Color Scale Overrides (Vibrant Royal Purple/Violet) */
+  --color-indigo-50: #f3f0ff;
+  --color-indigo-100: #e5dbff;
+  --color-indigo-200: #d0bfff;
+  --color-indigo-300: #b197fc;
+  --color-indigo-400: #9775fa;
+  --color-indigo-500: #845ef7;
+  --color-indigo-600: #7048e8;
+  --color-indigo-700: #5f3dc4;
+  --color-indigo-800: #5130b5;
+  --color-indigo-900: #4523a3;
+
+  /* Custom Slate/Zinc Color Scale Overrides (Warm Premium Zinc/Neutral) */
+  --color-slate-50: #fafafa;
+  --color-slate-100: #f4f4f5;
+  --color-slate-200: #e4e4e7;
+  --color-slate-300: #d4d4d8;
+  --color-slate-400: #a1a1aa;
+  --color-slate-500: #71717a;
+  --color-slate-600: #52525b;
+  --color-slate-700: #3f3f46;
+  --color-slate-800: #27272a;
+  --color-slate-900: #18181b;
+
+  /* Custom Status Color Overrides */
+  --color-emerald-50: #f0fdf4;
+  --color-emerald-100: #dcfce7;
+  --color-emerald-800: #166534;
+
+  --color-rose-50: #fff5f5;
+  --color-rose-100: #ffe3e3;
+  --color-rose-700: #c92a2a;
+  --color-rose-800: #b01e23;
+
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-700: #b45309;
 }
 
 html,
@@ -189,9 +227,10 @@ button:not(:disabled):active {
 
 /* Active links styling for sidebar nav */
 nav a.active {
-  background-color: #1e293b; /* bg-slate-800 */
+  background: linear-gradient(135deg, #18181b 0%, #27272a 100%) !important;
   color: #ffffff !important;
-  border-left-color: var(--color-brand-primary); /* brand indigo */
+  border-left: 4px solid var(--color-brand-primary) !important;
+  box-shadow: 0 4px 12px -2px rgba(24, 24, 27, 0.15);
   font-weight: 700;
 }
 
