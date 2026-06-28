@@ -1,10 +1,10 @@
-# 📋 Internal Asset Tracker
+# Internal Asset Tracker
 
-An enterprise-grade, full-stack internal asset-tracking system featuring a robust ASP.NET Core Web API backend and a responsive Angular frontend. Designed to manage equipment lifecycles, checkout transactions, audit trails, and automated email reminders for overdue returns.
+A full-stack internal asset-tracking system featuring a robust ASP.NET Core Web API backend and a responsive Angular frontend. Designed to manage equipment lifecycles, checkout transactions, audit trails, and automated email reminders for overdue returns.
 
 ---
 
-## 🚀 Introduction
+## Introduction
 
 The **Internal Asset Tracker** is built to solve the challenges of tracking internal company hardware and equipment (laptops, keyboards, monitors, etc.) across employees.
 
@@ -16,11 +16,11 @@ The **Internal Asset Tracker** is built to solve the challenges of tracking inte
 
 ---
 
-## 🛠️ Getting Started
+## Getting Started
 
 Follow these steps to configure, build, and run the project locally.
 
-### 📋 Prerequisites
+### Prerequisites
 Make sure you have the following installed on your machine:
 * **SDKs**: [.NET SDK 8.0 & 10.0](https://dotnet.microsoft.com/download)
 * **Database**: SQL Server (LocalDB / Express / Standard)
@@ -32,7 +32,7 @@ Make sure you have the following installed on your machine:
 
 ---
 
-### 📦 Installation & Setup
+## Installation & Setup
 
 #### 1. Clone & Configuration
 Clone the repository and set up configuration secrets. The application uses .NET User Secrets in development to keep credentials secure.
@@ -71,29 +71,29 @@ npm start
 
 ---
 
-## ⚙️ Software Dependencies & Tech Stack
+## Software Dependencies & Tech Stack
 
 | Tier | Technology | Purpose |
 |------|------------|---------|
 | **Backend API** | ASP.NET Core (.NET 8) | RESTful API, JWT authentication, role authorization |
 | **Database ORM**| Entity Framework Core | Database queries, migrations, and relationship management |
 | **Frontend** | Angular | Responsive single-page application (SPA), Tailwind CSS styling |
-| **Email Service**| SMTP / SendGrid | Automated transactional email notifications |
+| **Email Service**| SMTP | Automated transactional email notifications |
 | **Task Scheduler**| .NET Background Service | Daily overdue sweep at 08:00 SAST |
 
 ---
 
-## 🧪 Build and Test
+## Build and Test
 
 The project has comprehensive unit and integration test coverage for both backend and frontend.
 
-### 🖥️ Backend Tests (xUnit)
+### Backend Tests (xUnit)
 Run the C# test suite:
 ```powershell
 dotnet test
 ```
 
-### 🎨 Frontend Tests (Vitest / Angular CLI)
+### Frontend Tests (Vitest / Angular CLI)
 Run the Angular UI test suite:
 ```powershell
 cd AssetTracker.UI
@@ -102,24 +102,10 @@ npm test -- --watch=false
 
 ---
 
-## 🤝 Contribute
-
-We welcome contributions! Please adhere to the following workflow:
-
-1. **Create a branch**: Use descriptive names (`feature/`, `bugfix/`).
-2. **Code Quality**: Keep component responsibilities separate, write unit tests for new logic, and maintain compliance standards.
-3. **Database Changes**: If modifying database models, generate a new migration:
-   ```powershell
-   dotnet ef migrations add NameOfYourMigration --project AssetTracker.API
-   ```
-4. **Pull Requests**: Ensure all unit tests pass before submitting a pull request.
-
----
-
-## 📚 Additional Documentation
+## Additional Documentation
 For in-depth guides, check the following files in the [docs](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs) directory:
-* ✉️ [EMAIL_SETUP_GUIDE.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/EMAIL_SETUP_GUIDE.md) — SMTP & SendGrid setup.
-* 🏗️ [ARCHITECTURE_OVERVIEW.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/ARCHITECTURE_OVERVIEW.md) — Architecture and design.
-* 📡 [API_QUICK_REFERENCE.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/API_QUICK_REFERENCE.md) — Endpoint reference.
-* 📝 [TESTING_CHECKLIST.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/TESTING_CHECKLIST.md) — QA verification steps.
-* 📋 [COMPLIANCE_IMPLEMENTATION_SUMMARY.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/COMPLIANCE_IMPLEMENTATION_SUMMARY.md) — Detailed compliance notes.
+* [EMAIL_SETUP_GUIDE.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/EMAIL_SETUP_GUIDE.md) — SMTP setup.
+* [ARCHITECTURE_OVERVIEW.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/ARCHITECTURE_OVERVIEW.md) — Architecture and design.
+* [API_QUICK_REFERENCE.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/API_QUICK_REFERENCE.md) — Endpoint reference.
+* [TESTING_CHECKLIST.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/TESTING_CHECKLIST.md) — QA verification steps.
+* [COMPLIANCE_IMPLEMENTATION_SUMMARY.md](file:///d:/Repositories/Abdud-DaiyyaanBoltman/docs/COMPLIANCE_IMPLEMENTATION_SUMMARY.md) — Detailed compliance notes.
