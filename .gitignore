@@ -33,3 +33,7 @@ appsettings.Development.json
 ## Misc local artifacts
 response.txt
 **/response.txt
+
+# Local unit and E2E test folders synced during test runs
+AssetTracker.UI/src/tests/
+AssetTracker.UI/test/

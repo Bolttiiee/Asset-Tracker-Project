@@ -6,8 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "e2e:runbook": "playwright test -c playwright.config.ts",
+    "test": "node sync-tests.js && ng test",
+    "e2e:runbook": "node sync-tests.js && playwright test -c playwright.config.ts",
     "e2e:runbook:report": "playwright show-report"
   },
   "private": true,

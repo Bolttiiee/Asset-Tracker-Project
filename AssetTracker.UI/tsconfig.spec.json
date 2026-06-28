@@ -11,7 +11,8 @@
     "outDir": "./out-tsc/spec",
     "types": [
       "vitest/globals"
-    ]
+    ],
+    "preserveSymlinks": true
   },
   "include": [
     "src/**/*.d.ts",
