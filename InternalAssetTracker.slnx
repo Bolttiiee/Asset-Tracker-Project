@@ -1,5 +1,4 @@
 <Solution>
   <Project Path="tests/backend/AssetTracker.API.Tests.csproj" />
   <Project Path="AssetTracker.API/AssetTracker.API.csproj" />
-  <Project Path="BenchmarkSuite1/BenchmarkSuite1.csproj" />
 </Solution>
