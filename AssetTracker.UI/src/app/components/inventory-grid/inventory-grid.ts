@@ -426,11 +426,20 @@ export class InventoryGridComponent implements OnInit {
   }
 
   toggleMaintenance(asset: Asset, setMaintenance: boolean): void {
+    let message = '';
+    if (setMaintenance) {
+      if (asset.status === 'Checked Out') {
+        message = `Set "${asset.name}" to Under Maintenance? This will automatically return the asset, clear its assignment from the user, and make it unavailable for checkout until cleared. Click OK to proceed.`;
+      } else {
+        message = `Set "${asset.name}" to Under Maintenance? It will not be available for checkout until cleared. Click OK to proceed.`;
+      }
+    } else {
+      message = `Clear maintenance on "${asset.name}" and mark it as Available? Click OK to proceed.`;
+    }
+
     this.openConfirmation(
       setMaintenance ? 'Set Under Maintenance' : 'Clear Maintenance',
-      setMaintenance
-        ? `Set "${asset.name}" to Under Maintenance? It will not be available for checkout until cleared. Click OK to proceed.`
-        : `Clear maintenance on "${asset.name}" and mark it as Available? Click OK to proceed.`,
+      message,
       () => this.executeToggleMaintenance(asset, setMaintenance)
     );
   }

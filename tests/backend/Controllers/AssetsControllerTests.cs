@@ -278,5 +278,99 @@ namespace AssetTracker.API.Tests.Controllers
         }
 
         #endregion
+
+        #region SetMaintenanceStatus Tests
+
+        [Fact]
+        public async Task SetMaintenanceStatus_WithAvailableAsset_SetsUnderMaintenance()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new AssetsController(context);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+            var asset = context.Assets.First(a => a.Status == "Available");
+
+            // Act
+            var result = await controller.SetMaintenanceStatus(asset.AssetID, new MaintenanceDto { SetMaintenance = true });
+
+            // Assert
+            result.Should().BeOfType<OkObjectResult>();
+            var updatedAsset = context.Assets.Find(asset.AssetID);
+            updatedAsset!.Status.Should().Be("Under Maintenance");
+        }
+
+        [Fact]
+        public async Task SetMaintenanceStatus_WithCheckedOutAsset_ClosesActiveCheckoutAndSetsUnderMaintenance()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new AssetsController(context);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+            
+            // Fetch an asset and create an active checkout for it
+            var asset = context.Assets.First(a => a.Status == "Available");
+            asset.Status = "Checked Out";
+            asset.AssignedTo = "John Doe";
+            
+            var checkout = new Checkout
+            {
+                AssetID = asset.AssetID,
+                UserID = 2,
+                UserFullName = "John Doe",
+                UserEmail = "john@test.com",
+                CheckoutTimestamp = DateTime.UtcNow.AddDays(-5),
+                ExpectedReturnDate = DateTime.UtcNow.AddDays(2),
+                Status = "Active"
+            };
+            context.Checkouts.Add(checkout);
+            context.SaveChanges();
+
+            // Act
+            var result = await controller.SetMaintenanceStatus(asset.AssetID, new MaintenanceDto { SetMaintenance = true });
+
+            // Assert
+            result.Should().BeOfType<OkObjectResult>();
+            
+            // Asset should be Under Maintenance and unassigned
+            var updatedAsset = context.Assets.Find(asset.AssetID);
+            updatedAsset!.Status.Should().Be("Under Maintenance");
+            updatedAsset.AssignedTo.Should().BeEmpty();
+
+            // Checkout should be closed
+            var updatedCheckout = context.Checkouts.Find(checkout.CheckoutID);
+            updatedCheckout!.Status.Should().Be("Returned");
+            updatedCheckout.ActualReturnDate.Should().NotBeNull();
+
+            // Audit trails should be generated
+            var returnAudit = context.AuditTrails.FirstOrDefault(a => a.Action == "RETURN" && a.AssetID == asset.AssetID);
+            returnAudit.Should().NotBeNull();
+            returnAudit!.Details.Should().Contain("returned automatically");
+
+            var maintenanceAudit = context.AuditTrails.FirstOrDefault(a => a.Action == "SET_MAINTENANCE" && a.AssetID == asset.AssetID);
+            maintenanceAudit.Should().NotBeNull();
+        }
+
+        [Fact]
+        public async Task SetMaintenanceStatus_ClearMaintenance_SetsAvailable()
+        {
+            // Arrange
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var controller = new AssetsController(context);
+            ControllerTestHelper.SetupAuthenticatedUser(controller, "admin@test.com", "Admin");
+            
+            var asset = context.Assets.First(a => a.Status == "Available");
+            asset.Status = "Under Maintenance";
+            context.SaveChanges();
+
+            // Act
+            var result = await controller.SetMaintenanceStatus(asset.AssetID, new MaintenanceDto { SetMaintenance = false });
+
+            // Assert
+            result.Should().BeOfType<OkObjectResult>();
+            var updatedAsset = context.Assets.Find(asset.AssetID);
+            updatedAsset!.Status.Should().Be("Available");
+        }
+
+        #endregion
     }
 }

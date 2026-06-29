@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AssetTracker.API.Data;
@@ -346,7 +346,28 @@ namespace AssetTracker.API.Controller
             {
                 if (asset.Status == "Checked Out")
                 {
-                    return BadRequest(new { message = "Cannot set a checked-out asset to maintenance. Please return it first or use admin override." });
+                    var checkout = await _context.Checkouts
+                        .FirstOrDefaultAsync(c => c.AssetID == id && c.Status == "Active");
+
+                    if (checkout != null)
+                    {
+                        checkout.ActualReturnDate = DateTime.UtcNow;
+                        checkout.Status = "Returned";
+                    }
+
+                    var adminEmailForReturn = User.FindFirst(ClaimTypes.Email)?.Value ?? User.Identity?.Name ?? "System Admin";
+                    var returnAuditLog = new AuditTrail
+                    {
+                        Action = "RETURN",
+                        AssetID = asset.AssetID,
+                        AssetName = asset.Name,
+                        PerformedByEmail = adminEmailForReturn,
+                        Timestamp = DateTime.UtcNow,
+                        Details = $"Asset returned automatically to be sent for maintenance. Previously assigned to: {asset.AssignedTo}"
+                    };
+                    _context.AuditTrails.Add(returnAuditLog);
+
+                    asset.AssignedTo = string.Empty;
                 }
 
                 asset.Status = "Under Maintenance";

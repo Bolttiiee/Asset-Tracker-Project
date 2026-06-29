@@ -174,7 +174,7 @@
                       Force Return
                     </button>
  
-                    <button class="dropdown-item" *ngIf="asset.status === 'Available'" (click)="toggleMaintenance(asset, true)">
+                    <button class="dropdown-item" *ngIf="asset.status === 'Available' || asset.status === 'Checked Out'" (click)="toggleMaintenance(asset, true)">
                       Maintenance
                     </button>
                     <button class="dropdown-item success-item" *ngIf="asset.status === 'Under Maintenance'" (click)="toggleMaintenance(asset, false)">
