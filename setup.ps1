@@ -30,29 +30,52 @@ dotnet user-secrets set "Jwt:Secret" "$jwtSecret" --project AssetTracker.API
 Write-Host "JWT Secret successfully stored in local User Secrets." -ForegroundColor Green
 Write-Host ""
 
-# 3. Apply database updates
-Write-Host "Step 3: Creating Database and Applying Migrations" -ForegroundColor Yellow
+# 3. Ensure dotnet-ef tool is installed
+Write-Host "Step 3: Ensuring EF Core CLI Tool is installed" -ForegroundColor Yellow
+$efCommand = Get-Command dotnet-ef -ErrorAction SilentlyContinue
+if (-not $efCommand) {
+    Write-Host "dotnet-ef not found. Installing dotnet-ef globally..." -ForegroundColor Yellow
+    dotnet tool install --global dotnet-ef
+    # Update PATH for the current session to ensure the newly installed tool is accessible
+    $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
+} else {
+    Write-Host "dotnet-ef tool is already installed." -ForegroundColor Green
+}
+Write-Host ""
+
+# 4. Apply database updates
+Write-Host "Step 4: Creating Database and Applying Migrations" -ForegroundColor Yellow
+Write-Host "Note: By default, the app uses SQL Server Express (localhost\SQLEXPRESS)." -ForegroundColor Gray
+Write-Host "If you are using SQL Server LocalDB or another instance, make sure to update " -ForegroundColor Gray
+Write-Host "the ConnectionStrings:DefaultConnection in AssetTracker.API/appsettings.json." -ForegroundColor Gray
 dotnet ef database update --project AssetTracker.API
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Database setup completed successfully." -ForegroundColor Green
 } else {
-    Write-Warning "Database migrations failed to apply. Please verify SQL Server is running."
+    Write-Warning "Database migrations failed to apply. Verify SQL Server is running and connection string is correct."
 }
 Write-Host ""
 
-# 4. Frontend dependencies installation
-Write-Host "Step 4: Installing Frontend Dependencies" -ForegroundColor Yellow
-cd AssetTracker.UI
-npm install
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "Frontend packages installed successfully." -ForegroundColor Green
+# 5. Frontend dependencies installation
+Write-Host "Step 5: Installing Frontend Dependencies" -ForegroundColor Yellow
+$nodeCommand = Get-Command node -ErrorAction SilentlyContinue
+if (-not $nodeCommand) {
+    Write-Warning "Node.js (node) is not installed or not in PATH. Please install Node.js (https://nodejs.org/) to run the Angular UI."
 } else {
-    Write-Warning "Failed to install frontend dependencies."
+    cd AssetTracker.UI
+    npm install
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Frontend packages installed successfully." -ForegroundColor Green
+    } else {
+        Write-Warning "Failed to install frontend dependencies."
+    }
+    cd ..
 }
-cd ..
 Write-Host ""
 
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host "   Setup Completed!" -ForegroundColor Cyan
-Write-Host "   You can now start the application." -ForegroundColor Cyan
+Write-Host "   You can now start the application:" -ForegroundColor Cyan
+Write-Host "   Backend: dotnet run --project AssetTracker.API --launch-profile https" -ForegroundColor Gray
+Write-Host "   Frontend: cd AssetTracker.UI; npm start" -ForegroundColor Gray
 Write-Host "==========================================" -ForegroundColor Cyan
