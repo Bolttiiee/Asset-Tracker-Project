@@ -72,7 +72,7 @@ namespace AssetTracker.API.Services
             var overdueCheckouts = await _context.Checkouts
                 .Include(c => c.Asset)
                 .Include(c => c.User)
-                .Where(c => c.Status == "Active" && c.ExpectedReturnDate.Date <= today)
+                .Where(c => c.Status == "Active" && c.ExpectedReturnDate.Date <= today && !c.ReminderSent)
                 .ToListAsync(cancellationToken);
 
             result.OverdueCount = overdueCheckouts.Count;
@@ -107,6 +107,8 @@ namespace AssetTracker.API.Services
             // non-thread-safe DbContext.
             foreach (var checkout in sentCheckouts)
             {
+                checkout.ReminderSent = true;
+
                 var auditLog = new AuditTrail
                 {
                     Action = "EMAIL_REMINDER",

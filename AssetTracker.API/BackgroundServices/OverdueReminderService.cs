@@ -25,19 +25,8 @@ namespace AssetTracker.API.BackgroundServices
         {
             _logger.LogInformation("Overdue Reminder Service started.");
 
-            // Calculate the next run time (daily at 08:00 SAST), expressed in UTC for the timer.
-            var nextRun = GetNextRunUtc(DateTime.UtcNow);
-
             while (!stoppingToken.IsCancellationRequested)
             {
-                var delay = nextRun - DateTime.UtcNow;
-
-                if (delay > TimeSpan.Zero)
-                {
-                    _logger.LogInformation($"Next overdue check scheduled for: {nextRun:yyyy-MM-dd HH:mm:ss} UTC (08:00 SAST)");
-                    await Task.Delay(delay, stoppingToken);
-                }
-
                 try
                 {
                     using var scope = _serviceProvider.CreateScope();
@@ -49,8 +38,15 @@ namespace AssetTracker.API.BackgroundServices
                     _logger.LogError(ex, "Error occurred while processing overdue reminders.");
                 }
 
-                // Schedule the next run for the following day at 08:00 SAST.
-                nextRun = GetNextRunUtc(DateTime.UtcNow);
+                // Wait 1 minute before the next check.
+                try
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
             }
 
             _logger.LogInformation("Overdue Reminder Service stopped.");

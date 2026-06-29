@@ -120,6 +120,41 @@ namespace AssetTracker.API.Tests.Services
         }
 
         [Fact]
+        public async Task ProcessOverdueRemindersAsync_ExcludesCheckoutsWithReminderAlreadySent()
+        {
+            // Arrange - checkout is overdue but ReminderSent is already true
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var checkout = AddCheckout(context, assetId: 1, daysUntilDue: -3);
+            checkout.ReminderSent = true;
+            context.SaveChanges();
+            var processor = CreateProcessor(context);
+
+            // Act
+            var result = await processor.ProcessOverdueRemindersAsync();
+
+            // Assert
+            result.OverdueCount.Should().Be(0);
+            _mockEmail.Verify(e => e.SendOverdueReminderAsync(It.IsAny<Checkout>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task ProcessOverdueRemindersAsync_SetsReminderSentToTrueOnSuccess()
+        {
+            // Arrange - checkout is overdue and ReminderSent is false
+            var context = TestDbContextFactory.CreateContextWithSeedData();
+            var checkout = AddCheckout(context, assetId: 1, daysUntilDue: -3);
+            var processor = CreateProcessor(context);
+
+            // Act
+            await processor.ProcessOverdueRemindersAsync();
+
+            // Assert
+            checkout.ReminderSent.Should().BeTrue();
+            var dbCheckout = context.Checkouts.Find(checkout.CheckoutID);
+            dbCheckout!.ReminderSent.Should().BeTrue();
+        }
+
+        [Fact]
         public async Task ProcessOverdueRemindersAsync_WithMultipleOverdue_SendsReminderForEach()
         {
             // Arrange
