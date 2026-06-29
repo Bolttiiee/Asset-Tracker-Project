@@ -128,6 +128,8 @@ namespace AssetTracker.API.Controller
             asset.Status = "Checked Out";
             asset.AssignedTo = user.FullName;
 
+            var isOverdueOnAssignment = dto.ExpectedReturnDate.Value.Date <= Services.SastTimeHelper.GetTodaySast();
+
             var checkout = new Checkout
             {
                 AssetID = asset.AssetID,
@@ -136,7 +138,8 @@ namespace AssetTracker.API.Controller
                 UserEmail = user.Email,
                 CheckoutTimestamp = DateTime.UtcNow,
                 ExpectedReturnDate = dto.ExpectedReturnDate.Value,
-                Status = "Active"
+                Status = "Active",
+                LastReminderSentUtc = isOverdueOnAssignment ? DateTime.UtcNow : null
             };
             _context.Checkouts.Add(checkout);
 
@@ -153,19 +156,16 @@ namespace AssetTracker.API.Controller
             };
             _context.AuditTrails.Add(auditLog);
 
-            await _context.SaveChangesAsync();
-
             // If the asset is due today (or earlier) it is already overdue, so send the reminder
             // email immediately instead of waiting for the scheduled sweep. Reuses the same email
             // and EMAIL_REMINDER audit logging as the overdue-reminder job.
             var reminderEmailSent = false;
-            if (checkout.ExpectedReturnDate.Date <= Services.SastTimeHelper.GetTodaySast())
+            if (isOverdueOnAssignment)
             {
                 checkout.Asset = asset; // Ensure the email service has asset details available
                 try
                 {
                     await _emailService.SendOverdueReminderAsync(checkout);
-                    checkout.LastReminderSentUtc = DateTime.UtcNow;
 
                     var reminderAudit = new AuditTrail
                     {
@@ -178,7 +178,6 @@ namespace AssetTracker.API.Controller
                                   $"Days overdue: {(Services.SastTimeHelper.GetTodaySast() - checkout.ExpectedReturnDate.Date).Days}"
                     };
                     _context.AuditTrails.Add(reminderAudit);
-                    await _context.SaveChangesAsync();
 
                     reminderEmailSent = true;
                 }
@@ -186,8 +185,11 @@ namespace AssetTracker.API.Controller
                 {
                     // Don't fail the assignment if the email can't be sent; surface it in the response.
                     Console.WriteLine($"Failed to send immediate overdue reminder for asset {asset.AssetID}: {ex.Message}");
+                    checkout.LastReminderSentUtc = null; // Reset so background sweep can retry
                 }
             }
+
+            await _context.SaveChangesAsync();
 
             return Ok(new { 
                 success = true,
