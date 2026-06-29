@@ -165,6 +165,7 @@ namespace AssetTracker.API.Controller
                 try
                 {
                     await _emailService.SendOverdueReminderAsync(checkout);
+                    checkout.LastReminderSentUtc = DateTime.UtcNow;
 
                     var reminderAudit = new AuditTrail
                     {
@@ -469,6 +470,8 @@ namespace AssetTracker.API.Controller
             // Pass 2: write audit rows sequentially against the single, non-thread-safe DbContext.
             foreach (var checkout in sentCheckouts)
             {
+                checkout.LastReminderSentUtc = DateTime.UtcNow;
+
                 var auditLog = new AuditTrail
                 {
                     Action = "EMAIL_REMINDER",
