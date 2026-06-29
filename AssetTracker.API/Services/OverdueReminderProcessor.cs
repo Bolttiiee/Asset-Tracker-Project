@@ -74,6 +74,12 @@ namespace AssetTracker.API.Services
             var todayStartSast = nowSast.Date;
             var todayStartUtc = TimeZoneInfo.ConvertTimeToUtc(todayStartSast, SastTimeHelper.SastTimeZone);
 
+            var alreadySentToday = await _context.AuditTrails.AnyAsync(a =>
+                a.Action == "ADMIN_DIGEST" &&
+                a.Timestamp >= todayStartUtc &&
+                a.PerformedByEmail == "system@automated",
+                cancellationToken);
+
             var overdueCheckouts = await _context.Checkouts
                 .Include(c => c.Asset)
                 .Include(c => c.User)
@@ -131,42 +137,50 @@ namespace AssetTracker.API.Services
             result.EmailsSent = sentCheckouts.Count;
             result.EmailsFailed = overdueCheckouts.Count - sentCheckouts.Count;
 
-            // Send admin digest if there are overdue checkouts
-            if (overdueCheckouts.Any())
+            // Send admin digest if it has not been sent today yet and it is past 8:00 AM SAST
+            if (isPastEightSast && !alreadySentToday)
             {
-                try
+                var allOverdueCheckouts = await _context.Checkouts
+                    .Include(c => c.Asset)
+                    .Where(c => c.Status == "Active" && c.ExpectedReturnDate.Date <= today)
+                    .ToListAsync(cancellationToken);
+
+                if (allOverdueCheckouts.Any())
                 {
-                    var overdueInfo = overdueCheckouts.Select(c => new OverdueCheckoutInfo
+                    try
                     {
-                        UserFullName = c.UserFullName,
-                        UserEmail = c.UserEmail,
-                        AssetName = c.Asset?.Name ?? "Unknown",
-                        SerialNumber = c.Asset?.SerialNumber ?? "Unknown",
-                        CheckoutDate = c.CheckoutTimestamp,
-                        ExpectedReturnDate = c.ExpectedReturnDate,
-                        DaysOverdue = (today - c.ExpectedReturnDate.Date).Days
-                    }).ToList();
+                        var overdueInfo = allOverdueCheckouts.Select(c => new OverdueCheckoutInfo
+                        {
+                            UserFullName = c.UserFullName,
+                            UserEmail = c.UserEmail,
+                            AssetName = c.Asset?.Name ?? "Unknown",
+                            SerialNumber = c.Asset?.SerialNumber ?? "Unknown",
+                            CheckoutDate = c.CheckoutTimestamp,
+                            ExpectedReturnDate = c.ExpectedReturnDate,
+                            DaysOverdue = (today - c.ExpectedReturnDate.Date).Days
+                        }).ToList();
 
-                    await _emailService.SendAdminOverdueDigestAsync(overdueInfo);
+                        await _emailService.SendAdminOverdueDigestAsync(overdueInfo);
 
-                    // Log admin digest sent
-                    var adminAuditLog = new AuditTrail
+                        // Log admin digest sent
+                        var adminAuditLog = new AuditTrail
+                        {
+                            Action = "ADMIN_DIGEST",
+                            AssetID = null,
+                            AssetName = "System Report",
+                            PerformedByEmail = "system@automated",
+                            Timestamp = DateTime.UtcNow,
+                            Details = $"Daily overdue digest sent to admin. Total overdue assets: {allOverdueCheckouts.Count}"
+                        };
+                        _context.AuditTrails.Add(adminAuditLog);
+
+                        result.AdminDigestSent = true;
+                        _logger.LogInformation("Admin overdue digest sent successfully.");
+                    }
+                    catch (Exception ex)
                     {
-                        Action = "ADMIN_DIGEST",
-                        AssetID = null,
-                        AssetName = "System Report",
-                        PerformedByEmail = "system@automated",
-                        Timestamp = DateTime.UtcNow,
-                        Details = $"Daily overdue digest sent to admin. Total overdue assets: {overdueCheckouts.Count}"
-                    };
-                    _context.AuditTrails.Add(adminAuditLog);
-
-                    result.AdminDigestSent = true;
-                    _logger.LogInformation("Admin overdue digest sent successfully.");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to send admin overdue digest");
+                        _logger.LogError(ex, "Failed to send admin overdue digest");
+                    }
                 }
             }
 
