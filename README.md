@@ -22,9 +22,20 @@ Make sure you have the following installed on your machine:
 
 ## Installation & Setup
 
-#### 1. Clone & Configuration
-Clone the repository and set up configuration secrets. The application uses .NET User Secrets in development:
+The easiest way to get started is by running the interactive setup script, which will prompt you for configuration details (like your SMTP password), apply database migrations, and install packages:
 
+```powershell
+./setup.ps1
+```
+
+---
+
+### Manual Setup (Alternative)
+
+If you prefer to perform the setup steps manually, run the following commands:
+
+#### 1. Configure Secrets
+The application uses .NET User Secrets in development:
 ```powershell
 # Set JWT signing key (Required: 64-char key recommended)
 dotnet user-secrets set "Jwt:Secret" "YOUR_SUPER_SECRET_64_CHARACTER_KEY_GOES_HERE" --project AssetTracker.API
