@@ -35,7 +35,7 @@ namespace AssetTracker.API.Models
         [StringLength(50)]
         public string Status { get; set; } = "Active"; // Active, Returned, Overdue 
 
-        public bool ReminderSent { get; set; } = false;
+        public DateTime? LastReminderSentUtc { get; set; }
 
         /// <summary>
         /// Three-state status described by the data model (Active, Returned, Overdue).

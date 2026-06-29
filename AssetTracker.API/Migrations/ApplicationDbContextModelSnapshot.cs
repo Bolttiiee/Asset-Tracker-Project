@@ -143,8 +143,8 @@ namespace AssetTracker.API.Migrations
                     b.Property<DateTime>("ExpectedReturnDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("ReminderSent")
-                        .HasColumnType("bit");
+                    b.Property<DateTime?>("LastReminderSentUtc")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
                         .IsRequired()

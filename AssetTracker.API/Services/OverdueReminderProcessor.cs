@@ -69,10 +69,16 @@ namespace AssetTracker.API.Services
 
             // Get all overdue checkouts (an item due today is treated as overdue)
             var today = SastTimeHelper.GetTodaySast();
+            var nowSast = SastTimeHelper.GetNowSast();
+            var isPastEightSast = nowSast.TimeOfDay >= TimeSpan.FromHours(8);
+            var todayStartSast = nowSast.Date;
+            var todayStartUtc = TimeZoneInfo.ConvertTimeToUtc(todayStartSast, SastTimeHelper.SastTimeZone);
+
             var overdueCheckouts = await _context.Checkouts
                 .Include(c => c.Asset)
                 .Include(c => c.User)
-                .Where(c => c.Status == "Active" && c.ExpectedReturnDate.Date <= today && !c.ReminderSent)
+                .Where(c => c.Status == "Active" && c.ExpectedReturnDate.Date <= today &&
+                            (c.LastReminderSentUtc == null || (isPastEightSast && c.LastReminderSentUtc.Value < todayStartUtc)))
                 .ToListAsync(cancellationToken);
 
             result.OverdueCount = overdueCheckouts.Count;
@@ -107,7 +113,7 @@ namespace AssetTracker.API.Services
             // non-thread-safe DbContext.
             foreach (var checkout in sentCheckouts)
             {
-                checkout.ReminderSent = true;
+                checkout.LastReminderSentUtc = DateTime.UtcNow;
 
                 var auditLog = new AuditTrail
                 {

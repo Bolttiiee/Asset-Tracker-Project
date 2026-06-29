@@ -120,12 +120,12 @@ namespace AssetTracker.API.Tests.Services
         }
 
         [Fact]
-        public async Task ProcessOverdueRemindersAsync_ExcludesCheckoutsWithReminderAlreadySent()
+        public async Task ProcessOverdueRemindersAsync_ExcludesCheckoutsWithReminderAlreadySentToday()
         {
-            // Arrange - checkout is overdue but ReminderSent is already true
+            // Arrange - checkout is overdue but LastReminderSentUtc is already set to today
             var context = TestDbContextFactory.CreateContextWithSeedData();
             var checkout = AddCheckout(context, assetId: 1, daysUntilDue: -3);
-            checkout.ReminderSent = true;
+            checkout.LastReminderSentUtc = DateTime.UtcNow;
             context.SaveChanges();
             var processor = CreateProcessor(context);
 
@@ -138,9 +138,9 @@ namespace AssetTracker.API.Tests.Services
         }
 
         [Fact]
-        public async Task ProcessOverdueRemindersAsync_SetsReminderSentToTrueOnSuccess()
+        public async Task ProcessOverdueRemindersAsync_SetsLastReminderSentUtcOnSuccess()
         {
-            // Arrange - checkout is overdue and ReminderSent is false
+            // Arrange - checkout is overdue and LastReminderSentUtc is null
             var context = TestDbContextFactory.CreateContextWithSeedData();
             var checkout = AddCheckout(context, assetId: 1, daysUntilDue: -3);
             var processor = CreateProcessor(context);
@@ -149,9 +149,9 @@ namespace AssetTracker.API.Tests.Services
             await processor.ProcessOverdueRemindersAsync();
 
             // Assert
-            checkout.ReminderSent.Should().BeTrue();
+            checkout.LastReminderSentUtc.Should().NotBeNull();
             var dbCheckout = context.Checkouts.Find(checkout.CheckoutID);
-            dbCheckout!.ReminderSent.Should().BeTrue();
+            dbCheckout!.LastReminderSentUtc.Should().NotBeNull();
         }
 
         [Fact]
