@@ -35,6 +35,13 @@ builder.Services.AddScoped<IOverdueReminderProcessor, OverdueReminderProcessor>(
 // Register Background Service for Overdue Reminders
 builder.Services.AddHostedService<OverdueReminderService>();
 
+// Prevent background hosted service exceptions (such as SMTP email connection failures)
+// from crashing the entire ASP.NET Core API web server.
+builder.Services.Configure<HostOptions>(options =>
+{
+    options.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore;
+});
+
 // Register Cross-Origin Resource Sharing (CORS) Policies
 builder.Services.AddCors(options =>
 {
